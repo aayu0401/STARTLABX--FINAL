@@ -25,16 +25,49 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Textarea } from '../ui/textarea';
 
-const formSchema = z.object({
-  fullName: z.string().min(1, { message: 'Full name is required' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z
-    .string()
-    .min(8, { message: 'Password must be at least 8 characters long.' }),
-  accountType: z.enum(['startup', 'professional']),
-  inviteCode: z.string().min(6, { message: 'Invite code is required.' }),
-});
+const formSchema = z
+  .object({
+    fullName: z.string().min(1, { message: 'Full name is required' }),
+    email: z.string().email({ message: 'Please enter a valid email.' }),
+    password: z
+      .string()
+      .min(8, { message: 'Password must be at least 8 characters long.' }),
+    accountType: z.enum(['startup', 'professional'], {
+      required_error: 'Please select an account type.',
+    }),
+    inviteCode: z.string().min(6, { message: 'Invite code is required.' }),
+    // Professional fields
+    title: z.string().optional(),
+    skills: z.string().optional(),
+    availability: z.enum(['freelance', 'equity', 'cofounder']).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.accountType === 'professional') {
+      if (!data.title || data.title.length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['title'],
+          message: 'Title is required and must be at least 3 characters.',
+        });
+      }
+      if (!data.skills || data.skills.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['skills'],
+          message: 'Please list at least one skill.',
+        });
+      }
+       if (!data.availability) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['availability'],
+          message: 'Please select your availability.',
+        });
+      }
+    }
+  });
 
 type UserFormValue = z.infer<typeof formSchema>;
 
@@ -51,6 +84,8 @@ export function SignUpForm() {
       inviteCode: '',
     },
   });
+
+  const accountType = form.watch('accountType');
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
@@ -70,6 +105,33 @@ export function SignUpForm() {
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="accountType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>I am a...</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={loading}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select account type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="startup">Startup / Founder</SelectItem>
+                    <SelectItem value="professional">
+                      Professional / Talent
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="fullName"
@@ -119,33 +181,64 @@ export function SignUpForm() {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="accountType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>I am a...</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                  disabled={loading}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select account type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="startup">Startup / Founder</SelectItem>
-                    <SelectItem value="professional">
-                      Professional / Talent
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
+          {accountType === 'professional' && (
+            <div className='space-y-4 p-4 border rounded-lg bg-secondary/50'>
+               <h3 className="text-sm font-medium text-muted-foreground">Professional Profile</h3>
+                <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Your Title</FormLabel>
+                        <FormControl>
+                        <Input placeholder="e.g., Senior Frontend Developer" disabled={loading} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="skills"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Skills</FormLabel>
+                        <FormControl>
+                        <Textarea placeholder="e.g., React, TypeScript, Figma..." disabled={loading} {...field} />
+                        </FormControl>
+                         <FormDescription>
+                          Enter a comma-separated list of your top skills.
+                        </FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                  control={form.control}
+                  name="availability"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Availability</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="What are you looking for?" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="cofounder">Co-founder (Equity)</SelectItem>
+                          <SelectItem value="equity">Early Employee (Equity)</SelectItem>
+                          <SelectItem value="freelance">Freelance / Contract</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+          )}
+
           <FormField
             control={form.control}
             name="inviteCode"
@@ -166,7 +259,7 @@ export function SignUpForm() {
               </FormItem>
             )}
           />
-          <Button disabled={loading} className="w-full" type="submit">
+          <Button disabled={loading || !accountType} className="w-full" type="submit">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Request Access
           </Button>
