@@ -42,11 +42,14 @@ export default function LandingPage() {
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Rocket className="h-7 w-7 text-primary" />
-          <span className="text-2xl font-bold">EquityBuild</span>
+          <span className="text-2xl font-bold font-headline">StartLabX</span>
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
           <Button asChild variant="ghost">
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Sign Up</Link>
           </Button>
         </nav>
       </header>
@@ -54,7 +57,7 @@ export default function LandingPage() {
       <main className="flex-grow">
         <section className="text-center py-20 sm:py-28 lg:py-32">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight font-headline">
               Build Your Vision, <span className="text-primary">Together</span>.
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-lg text-muted-foreground">
@@ -62,7 +65,7 @@ export default function LandingPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg">
-                <Link href="/dashboard">Get Started</Link>
+                <Link href="/signup">Get Started - It's Invite-Only</Link>
               </Button>
             </div>
           </div>
@@ -71,7 +74,7 @@ export default function LandingPage() {
         <section id="features" className="py-20 sm:py-24 bg-secondary">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl sm:text-4xl font-bold">A Founder-Focused Ecosystem</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold font-headline">A Founder-Focused Ecosystem</h2>
               <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
                 Everything you need to build, manage, and grow your equity-based team.
               </p>
@@ -81,7 +84,7 @@ export default function LandingPage() {
                 <Card key={index} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader className="items-center">
                     {feature.icon}
-                    <CardTitle className="mt-4">{feature.title}</CardTitle>
+                    <CardTitle className="mt-4 font-headline">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{feature.description}</p>
@@ -95,7 +98,7 @@ export default function LandingPage() {
 
       <footer className="bg-secondary py-6">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} EquityBuild. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} StartLabX. All rights reserved.</p>
         </div>
       </footer>
     </div>

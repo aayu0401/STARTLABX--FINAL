@@ -19,7 +19,6 @@ import {
   Rocket,
   Users,
   LayoutDashboard,
-  Handshake,
   BrainCircuit,
   Bot,
   UserCircle,
@@ -56,8 +55,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader>
             <Link href="/" className="flex items-center gap-2.5">
               <Rocket className="w-7 h-7 text-primary" />
-              <h2 className="text-xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden">
-                EquityBuild
+              <h2 className="text-xl font-bold tracking-tight text-foreground group-data-[collapsible=icon]:hidden font-headline">
+                StartLabX
               </h2>
             </Link>
           </SidebarHeader>
@@ -99,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <header className="flex h-16 items-center justify-between border-b px-4 sm:px-6">
                 <div className="flex items-center gap-4">
                   <SidebarTrigger className="md:hidden" />
-                   <h1 className="text-xl font-semibold tracking-tight">
+                   <h1 className="text-xl font-semibold tracking-tight font-headline">
                     {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
                   </h1>
                 </div>

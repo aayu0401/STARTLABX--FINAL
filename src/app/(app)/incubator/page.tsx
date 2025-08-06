@@ -54,7 +54,7 @@ export default function IncubatorPage() {
           </div>
           <CardTitle className="text-3xl font-bold">Have a new venture idea?</CardTitle>
           <CardDescription className="max-w-xl mx-auto mt-2">
-            Propose your idea to the community, find co-founders, and build the next big thing together. From ideation to launch, all within EquityBuild.
+            Propose your idea to the community, find co-founders, and build the next big thing together. From ideation to launch, all within StartLabX.
           </CardDescription>
         </CardHeader>
         <CardContent>

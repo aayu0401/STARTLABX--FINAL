@@ -3,8 +3,8 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'EquityBuild',
-  description: 'Build your startup without upfront funding. Connect with professionals ready to work for equity.',
+  title: 'StartLabX',
+  description: 'Launch your startup with the right team. Connect with professionals ready to build for equity.',
 };
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Lexend+Deca:wght@300;400;500&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
         {children}
