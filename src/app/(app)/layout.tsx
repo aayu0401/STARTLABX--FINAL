@@ -39,7 +39,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", icon: <Bot />, label: "AI Talent Match" },
+  { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
   { href: "/ai-studio", icon: <Wand2 />, label: "AI Studio" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },

@@ -5,7 +5,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Find Your Next Co-Founder</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
           <p className="text-muted-foreground mt-1">
             Describe your startup and needs, and let our AI suggest the perfect talent for your team.
           </p>
