@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -28,6 +30,8 @@ type UserFormValue = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const [loading, setLoading] = React.useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -40,9 +44,19 @@ export function LoginForm() {
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    console.log(data);
-    setLoading(false);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    // In a real app, you'd handle authentication here and check the user's role.
+    // For now, we'll just show a success message and redirect.
+    toast({
+      title: 'Login Successful',
+      description: 'Welcome back! Redirecting you to your dashboard...',
+    });
+
+    // We'll redirect to the main dashboard for now.
+    router.push('/dashboard');
+    
+    // setLoading(false); // No need to set loading to false as we are redirecting
   };
 
   return (

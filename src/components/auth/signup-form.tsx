@@ -26,6 +26,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '../ui/textarea';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z
   .object({
@@ -74,6 +75,7 @@ type UserFormValue = z.infer<typeof formSchema>;
 export function SignUpForm() {
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -89,16 +91,23 @@ export function SignUpForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Simulate API call for signup
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     console.log(data);
     toast({
-      title: 'Request Received!',
+      title: 'Account Created!',
       description:
-        'Your request has been submitted. We will review it and get back to you shortly.',
+        'Welcome to StartLabX! Redirecting you to your dashboard...',
     });
-    setLoading(false);
-    form.reset();
+    
+    // In a real app, you would get the user role from the backend.
+    // We'll redirect based on the form's accountType.
+    if (data.accountType === 'startup') {
+        router.push('/dashboard');
+    } else {
+        router.push('/talent'); // Professionals will land on the talent marketplace for now
+    }
+    // No need to setLoading(false) due to redirection
   };
 
   return (
