@@ -24,6 +24,7 @@ import {
   UserCircle,
   Bell,
   Settings,
+  Wand2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", icon: <Bot />, label: "AI Talent Match" },
+  { href: "/ai-studio", icon: <Wand2 />, label: "AI Studio" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
   { href: "/projects", icon: <LayoutDashboard />, label: "Collaboration" },
