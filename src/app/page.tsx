@@ -81,7 +81,7 @@ export default function LandingPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {featureCards.map((feature, index) => (
-                <Card key={index} className="text-center shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card key={index} className="text-center hover:shadow-xl">
                   <CardHeader className="items-center">
                     {feature.icon}
                     <CardTitle className="mt-4 font-headline">{feature.title}</CardTitle>

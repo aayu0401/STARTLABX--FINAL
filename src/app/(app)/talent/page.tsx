@@ -101,9 +101,9 @@ export default function TalentPage() {
       </Card>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {talentPool.map((talent) => (
-          <Card key={talent.name} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card key={talent.name} className="flex flex-col hover:shadow-xl group">
             <CardHeader className="text-center items-center">
-              <Avatar className="w-24 h-24 mb-4 border-4 border-primary/20">
+              <Avatar className="w-24 h-24 mb-4 border-4 border-primary/20 group-hover:border-primary/40 transition-colors">
                 <AvatarImage src={talent.avatar} alt={talent.name} data-ai-hint={talent.dataAiHint} />
                 <AvatarFallback>{talent.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>

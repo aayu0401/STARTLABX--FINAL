@@ -66,7 +66,7 @@ export default function StartupsPage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {startups.map((startup, index) => (
-          <Card key={index} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card key={index} className="flex flex-col hover:shadow-xl">
             <CardHeader className="flex-row items-start gap-4">
               <Image src={startup.logo} alt={`${startup.name} logo`} width={64} height={64} className="rounded-lg border" data-ai-hint={startup.dataAiHint} />
               <div>

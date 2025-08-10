@@ -47,7 +47,7 @@ const ideas = [
 export default function IncubatorPage() {
   return (
     <div className="space-y-8">
-      <Card className="text-center p-8 bg-primary/5">
+      <Card className="text-center p-8 bg-primary/5 hover:shadow-lg">
         <CardHeader>
           <div className="flex justify-center mb-4">
             <Lightbulb className="h-16 w-16 text-primary" />
@@ -69,7 +69,7 @@ export default function IncubatorPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {ideas.map((idea) => (
-          <Card key={idea.title} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card key={idea.title} className="flex flex-col hover:shadow-xl">
             <CardHeader>
               <CardTitle>{idea.title}</CardTitle>
               <div className="flex items-center gap-2 pt-2">

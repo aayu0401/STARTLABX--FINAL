@@ -25,7 +25,7 @@ const KanbanColumn = ({ title, children }: { title: string; children: React.Reac
   <div className="flex-1 min-w-[300px] bg-secondary/50 rounded-lg p-4">
     <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
       {title}
-      <Button variant="ghost" size="icon">
+      <Button variant="ghost" size="icon" className="rounded-full">
         <PlusCircle className="h-5 w-5 text-muted-foreground" />
       </Button>
     </h3>
@@ -34,7 +34,7 @@ const KanbanColumn = ({ title, children }: { title: string; children: React.Reac
 );
 
 const TaskCard = ({ task }: { task: { id: string, title: string, priority: string, tags: string[] } }) => (
-  <Card className="shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+  <Card className="hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing active:shadow-lg">
     <CardContent className="p-4">
       <p className="font-medium mb-2">{task.title}</p>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
