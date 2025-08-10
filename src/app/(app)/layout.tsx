@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,7 +14,6 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
-  SidebarMenuAction,
 } from "@/components/ui/sidebar";
 import {
   Rocket,
@@ -25,8 +24,6 @@ import {
   Lightbulb,
   Bell,
   Settings,
-  RefreshCw,
-  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -39,7 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const initialNavItems = [
+const navItems = [
   { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
@@ -50,20 +47,9 @@ const initialNavItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [navItems, setNavItems] = useState(initialNavItems);
-
-  const handleRemoveItem = (href: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setNavItems(currentItems => currentItems.filter(item => item.href !== href));
-  };
-  
-  const handleResetNav = () => {
-    setNavItems(initialNavItems);
-  }
 
   const getPageTitle = () => {
-    const activeItem = initialNavItems.find(item => pathname.startsWith(item.href));
+    const activeItem = navItems.find(item => pathname.startsWith(item.href));
     return activeItem ? activeItem.label : 'Dashboard';
   }
 
@@ -83,7 +69,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href} className="flex-grow">
+                  <Link href={item.href} className="w-full">
                     <SidebarMenuButton
                       isActive={pathname.startsWith(item.href)}
                       tooltip={{ children: item.label }}
@@ -93,13 +79,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </Link>
-                   <SidebarMenuAction 
-                      showOnHover 
-                      onClick={(e) => handleRemoveItem(item.href, e)}
-                      aria-label={`Remove ${item.label}`}
-                    >
-                      <X />
-                    </SidebarMenuAction>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -107,12 +86,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter className="group-data-[collapsible=icon]:hidden">
              <div className="border-t -mx-2 pt-2">
                 <SidebarMenu>
-                    <SidebarMenuItem>
-                         <SidebarMenuButton className="justify-start" onClick={handleResetNav}>
-                            <RefreshCw className="w-4 h-4" />
-                            <span>Reset Navigation</span>
-                         </SidebarMenuButton>
-                    </SidebarMenuItem>
                     <SidebarMenuItem>
                          <Link href="#">
                             <SidebarMenuButton className="justify-start">
