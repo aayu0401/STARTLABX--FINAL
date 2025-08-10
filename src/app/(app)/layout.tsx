@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,19 +14,19 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarMenuAction,
 } from "@/components/ui/sidebar";
 import {
   Rocket,
   Users,
   LayoutDashboard,
-  BrainCircuit,
-  Bot,
-  UserCircle,
-  Bell,
-  Settings,
   Wand2,
   Briefcase,
   Lightbulb,
+  Bell,
+  Settings,
+  RefreshCw,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,9 +38,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 
-const navItems = [
+const initialNavItems = [
   { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
@@ -51,6 +50,22 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [navItems, setNavItems] = useState(initialNavItems);
+
+  const handleRemoveItem = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setNavItems(currentItems => currentItems.filter(item => item.href !== href));
+  };
+  
+  const handleResetNav = () => {
+    setNavItems(initialNavItems);
+  }
+
+  const getPageTitle = () => {
+    const activeItem = initialNavItems.find(item => pathname.startsWith(item.href));
+    return activeItem ? activeItem.label : 'Dashboard';
+  }
 
   return (
     <SidebarProvider>
@@ -68,16 +83,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <Link href={item.href}>
+                  <Link href={item.href} className="flex-grow">
                     <SidebarMenuButton
-                      isActive={pathname === item.href}
+                      isActive={pathname.startsWith(item.href)}
                       tooltip={{ children: item.label }}
-                      className="justify-start"
+                      className="justify-start w-full"
                     >
                       {item.icon}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </Link>
+                   <SidebarMenuAction 
+                      showOnHover 
+                      onClick={(e) => handleRemoveItem(item.href, e)}
+                      aria-label={`Remove ${item.label}`}
+                    >
+                      <X />
+                    </SidebarMenuAction>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -85,6 +107,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter className="group-data-[collapsible=icon]:hidden">
              <div className="border-t -mx-2 pt-2">
                 <SidebarMenu>
+                    <SidebarMenuItem>
+                         <SidebarMenuButton className="justify-start" onClick={handleResetNav}>
+                            <RefreshCw className="w-4 h-4" />
+                            <span>Reset Navigation</span>
+                         </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                          <Link href="#">
                             <SidebarMenuButton className="justify-start">
@@ -103,7 +131,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-4">
                   <SidebarTrigger className="md:hidden" />
                    <h1 className="text-xl font-semibold tracking-tight font-headline">
-                    {navItems.find(item => item.href === pathname)?.label || 'Dashboard'}
+                    {getPageTitle()}
                   </h1>
                 </div>
 
