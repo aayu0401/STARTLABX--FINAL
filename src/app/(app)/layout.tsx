@@ -42,11 +42,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
-  { href: "/ai-studio", icon: <Wand2 />, label: "AI Studio" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
   { href: "/projects", icon: <Briefcase />, label: "Collaboration" },
   { href: "/incubator", icon: <Lightbulb />, label: "Incubator" },
+  { href: "/ai-studio", icon: <Wand2 />, label: "AI Studio" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
