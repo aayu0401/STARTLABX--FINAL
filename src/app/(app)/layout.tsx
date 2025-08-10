@@ -25,6 +25,8 @@ import {
   Bell,
   Settings,
   Wand2,
+  Briefcase,
+  Lightbulb,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -43,8 +45,8 @@ const navItems = [
   { href: "/ai-studio", icon: <Wand2 />, label: "AI Studio" },
   { href: "/startups", icon: <Rocket />, label: "Startup Showcase" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
-  { href: "/projects", icon: <LayoutDashboard />, label: "Collaboration" },
-  { href: "/incubator", icon: <BrainCircuit />, label: "Incubator" },
+  { href: "/projects", icon: <Briefcase />, label: "Collaboration" },
+  { href: "/incubator", icon: <Lightbulb />, label: "Incubator" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
