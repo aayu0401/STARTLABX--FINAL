@@ -11,7 +11,7 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        <Card className="shadow-lg">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
             <CardHeader>
                 <CardTitle>AI-Powered Talent Matching</CardTitle>
                 <CardDescription>Fill out the details below to get personalized talent suggestions.</CardDescription>
