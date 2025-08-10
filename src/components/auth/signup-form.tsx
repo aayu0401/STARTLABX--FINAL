@@ -38,7 +38,7 @@ const formSchema = z
     accountType: z.enum(['startup', 'professional'], {
       required_error: 'Please select an account type.',
     }),
-    inviteCode: z.string().min(6, { message: 'Invite code is required.' }),
+    inviteCode: z.string().optional(),
     // Professional fields
     title: z.string().optional(),
     skills: z.string().optional(),
@@ -46,6 +46,13 @@ const formSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.accountType === 'professional') {
+      if (!data.inviteCode || data.inviteCode.length < 6) {
+         ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['inviteCode'],
+          message: 'A valid invite code is required for professionals.',
+        });
+      }
       if (!data.title || data.title.length < 3) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -245,29 +252,43 @@ export function SignUpForm() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="inviteCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invite Code</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your invite code"
+                          disabled={loading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Professional accounts require an invite code.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
           )}
-
-          <FormField
+          
+          {accountType === 'startup' && (
+            <FormField
             control={form.control}
             name="inviteCode"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Invite Code</FormLabel>
+              <FormItem className="hidden">
                 <FormControl>
-                  <Input
-                    placeholder="Enter your invite code"
-                    disabled={loading}
-                    {...field}
-                  />
+                  <Input {...field} value="startup-no-code-needed"/>
                 </FormControl>
-                <FormDescription>
-                  StartLabX is currently invite-only.
-                </FormDescription>
-                <FormMessage />
               </FormItem>
             )}
           />
+          )}
+
           <Button disabled={loading || !accountType} className="w-full" type="submit">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Request Access
