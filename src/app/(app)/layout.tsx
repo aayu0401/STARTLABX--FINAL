@@ -105,7 +105,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col h-full">
             <header className="flex h-16 items-center justify-between border-b px-4 sm:px-6">
                 <div className="flex items-center gap-4">
-                  <SidebarTrigger className="md:hidden" />
+                  <SidebarTrigger />
                    <h1 className="text-xl font-semibold tracking-tight font-headline">
                     {getPageTitle()}
                   </h1>
