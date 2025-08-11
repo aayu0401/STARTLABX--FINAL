@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -14,6 +15,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import {
   Rocket,
@@ -56,7 +58,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen">
-        <Sidebar>
+        <Sidebar variant="floating" collapsible="icon">
+          <SidebarRail />
           <SidebarHeader>
             <Link href="/" className="flex items-center gap-2.5">
               <Rocket className="w-7 h-7 text-primary" />
