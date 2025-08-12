@@ -2,27 +2,35 @@
 
 import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
+import { z } from 'zod';
 
-type UserProfile = {
-  uid: string;
-  email: string;
-  fullName: string;
-  accountType: 'startup' | 'professional';
-  title?: string;
-  skills?: string;
-  availability?: 'freelance' | 'equity' | 'cofounder';
-  createdAt: Date;
-};
+const UserProfileSchema = z.object({
+  uid: z.string().min(1),
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  accountType: z.enum(['startup', 'professional']),
+  title: z.string().optional(),
+  skills: z.string().optional(),
+  availability: z.enum(['freelance', 'equity', 'cofounder']).optional(),
+});
+
+type UserProfile = z.infer<typeof UserProfileSchema>;
 
 export async function createUserProfile(profile: Omit<UserProfile, 'createdAt'>) {
   try {
-    const userRef = doc(db, 'users', profile.uid);
+    // Validate the profile data on the server
+    const validatedProfile = UserProfileSchema.parse(profile);
+
+    const userRef = doc(db, 'users', validatedProfile.uid);
     await setDoc(userRef, {
-      ...profile,
+      ...validatedProfile,
       createdAt: new Date(),
     });
   } catch (error) {
     console.error('Error creating user profile in Firestore:', error);
+    if (error instanceof z.ZodError) {
+      throw new Error('Invalid profile data.');
+    }
     throw new Error('Failed to save user profile.');
   }
 }
