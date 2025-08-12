@@ -27,6 +27,9 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '../ui/textarea';
 import { useRouter } from 'next/navigation';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { createUserProfile } from '@/services/firestore';
 
 const formSchema = z
   .object({
@@ -98,23 +101,43 @@ export function SignUpForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    // Simulate API call for signup
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.log(data);
-    toast({
-      title: 'Account Created!',
-      description:
-        'Welcome to StartLabX! Redirecting you to your dashboard...',
-    });
-    
-    // In a real app, you would get the user role from the backend.
-    // We'll redirect based on the form's accountType.
-    if (data.accountType === 'startup') {
-        router.push('/dashboard');
-    } else {
-        router.push('/talent'); // Professionals will land on the talent marketplace for now
+    try {
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      const user = userCredential.user;
+
+      // 2. Create user profile in Firestore
+      await createUserProfile({
+        uid: user.uid,
+        email: data.email,
+        fullName: data.fullName,
+        accountType: data.accountType,
+        title: data.title,
+        skills: data.skills,
+        availability: data.availability,
+      });
+
+      toast({
+        title: 'Account Created!',
+        description:
+          'Welcome to StartLabX! Redirecting you to your dashboard...',
+      });
+
+      router.push('/dashboard');
+      
+    } catch (error: any) {
+      console.error("Signup failed:", error);
+      toast({
+        variant: "destructive",
+        title: 'Sign Up Failed',
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+      setLoading(false);
     }
-    // No need to setLoading(false) due to redirection
   };
 
   return (

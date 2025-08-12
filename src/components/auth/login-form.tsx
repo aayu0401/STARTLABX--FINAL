@@ -18,6 +18,8 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -43,20 +45,24 @@ export function LoginForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    // In a real app, you'd handle authentication here and check the user's role.
-    // For now, we'll just show a success message and redirect.
-    toast({
-      title: 'Login Successful',
-      description: 'Welcome back! Redirecting you to your dashboard...',
-    });
+    try {
+      await signInWithEmailAndPassword(auth, data.email, data.password);
+      
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back! Redirecting you to your dashboard...',
+      });
 
-    // We'll redirect to the main dashboard for now.
-    router.push('/dashboard');
-    
-    // setLoading(false); // No need to set loading to false as we are redirecting
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({
+        variant: "destructive",
+        title: 'Login Failed',
+        description: error.message || 'An unexpected error occurred. Please try again.',
+      });
+      setLoading(false);
+    }
   };
 
   return (
