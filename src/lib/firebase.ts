@@ -22,7 +22,7 @@ if (
     !firebaseConfig.messagingSenderId ||
     !firebaseConfig.appId
 ) {
-    throw new Error("Firebase configuration is missing. Make sure all required environment variables are set in .env.local");
+    throw new Error("Firebase configuration is missing. Make sure all required environment variables are set in .env.local and next.config.ts");
 }
 
 
