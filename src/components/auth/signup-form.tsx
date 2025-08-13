@@ -314,7 +314,7 @@ export function SignUpForm() {
 
           <Button disabled={loading || !accountType} className="w-full" type="submit">
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Request Access
+            {accountType === 'professional' ? 'Request Access' : 'Sign Up'}
           </Button>
         </form>
       </Form>
