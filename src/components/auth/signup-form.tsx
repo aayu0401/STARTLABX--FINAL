@@ -30,6 +30,7 @@ import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { createUserProfile } from '@/services/firestore';
+import { error } from 'console';
 
 const formSchema = z
   .object({
@@ -109,7 +110,7 @@ export function SignUpForm() {
         data.password
       );
       const user = userCredential.user;
-
+      debugger;
       // 2. Create user profile in Firestore
       await createUserProfile({
         uid: user.uid,
@@ -119,6 +120,9 @@ export function SignUpForm() {
         title: data.title,
         skills: data.skills,
         availability: data.availability,
+      }).catch((error) => {
+        debugger;
+        console.log(error);
       });
 
       toast({

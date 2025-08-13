@@ -17,8 +17,10 @@ const UserProfileSchema = z.object({
 type UserProfile = z.infer<typeof UserProfileSchema>;
 
 export async function createUserProfile(profile: Omit<UserProfile, 'createdAt'>) {
+  console.log({profile});
   try {
     // Validate the profile data on the server
+    debugger;
     const validatedProfile = UserProfileSchema.parse(profile);
 
     const userRef = doc(db, 'users', validatedProfile.uid);
@@ -31,6 +33,6 @@ export async function createUserProfile(profile: Omit<UserProfile, 'createdAt'>)
     if (error instanceof z.ZodError) {
       throw new Error('Invalid profile data.');
     }
-    throw new Error('Failed to save user profile.');
+    throw error;
   }
 }
