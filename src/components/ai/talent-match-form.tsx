@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { suggestTalent } from '@/ai/flows/talent-suggestions';
+import { analyticsService } from '@/services/analytics';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,11 @@ export function TalentMatchForm() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const { toast } = useToast();
 
+  // Track form interaction
+  useEffect(() => {
+    analyticsService.trackFormInteraction('talent_match_form', 'started');
+  }, []);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,11 +52,31 @@ export function TalentMatchForm() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     setSuggestions([]);
+
+    // Track AI feature usage
+    await analyticsService.track('ai_match_requested', {
+      startup_description_length: values.startupDescription.length,
+      skills_count: values.requiredSkills.split(',').length,
+      equity_expectation: values.equityExpectations,
+    });
+
     try {
       const result = await suggestTalent(values);
       if (result?.talentSuggestions) {
         setSuggestions(result.talentSuggestions);
+        
+        // Track successful AI match
+        await analyticsService.track('ai_match_completed', {
+          suggestions_count: result.talentSuggestions.length,
+          success: true,
+        });
       } else {
+        await analyticsService.track('ai_match_completed', {
+          suggestions_count: 0,
+          success: false,
+          reason: 'no_matches_found',
+        });
+
         toast({
           variant: "destructive",
           title: "No suggestions found",
@@ -59,6 +85,9 @@ export function TalentMatchForm() {
       }
     } catch (error) {
       console.error('Error fetching talent suggestions:', error);
+      
+      await analyticsService.trackError('ai_suggestion_error', String(error), 'talent_match_form');
+
       toast({
         variant: "destructive",
         title: "An error occurred",
@@ -136,7 +165,11 @@ export function TalentMatchForm() {
               )}
             />
           </div>
-          <Button type="submit" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

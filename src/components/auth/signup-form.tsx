@@ -26,11 +26,11 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '../ui/textarea';
-import { useRouter } from 'next/navigation';
+import { useNavigation } from '@/hooks/use-navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { createUserProfile } from '@/services/firestore';
-import { error } from 'console';
+import { createLegacyUserProfile } from '@/services/firestore';
+import { analyticsService } from '@/services/analytics';
 
 const formSchema = z
   .object({
@@ -86,7 +86,12 @@ type UserFormValue = z.infer<typeof formSchema>;
 export function SignUpForm() {
   const [loading, setLoading] = React.useState(false);
   const { toast } = useToast();
-  const router = useRouter();
+  const { navigateTo } = useNavigation();
+
+  // Track form started when component mounts
+  React.useEffect(() => {
+    analyticsService.trackFormInteraction('signup_form', 'started');
+  }, []);
 
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -102,6 +107,12 @@ export function SignUpForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
+    
+    // Track signup started
+    await analyticsService.track('sign_up_started', { 
+      account_type: data.accountType 
+    });
+
     try {
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
@@ -110,9 +121,16 @@ export function SignUpForm() {
         data.password
       );
       const user = userCredential.user;
-      debugger;
+
+      // Set user properties for analytics
+      await analyticsService.setUser(user.uid, {
+        account_type: data.accountType,
+        full_name: data.fullName,
+        email: data.email,
+      });
+
       // 2. Create user profile in Firestore
-      await createUserProfile({
+      await createLegacyUserProfile({
         uid: user.uid,
         email: data.email,
         fullName: data.fullName,
@@ -120,10 +138,10 @@ export function SignUpForm() {
         title: data.title,
         skills: data.skills,
         availability: data.availability,
-      }).catch((error) => {
-        debugger;
-        console.log(error);
       });
+
+      // Track successful signup
+      await analyticsService.trackSignUp(data.accountType, true);
 
       toast({
         title: 'Account Created!',
@@ -131,10 +149,18 @@ export function SignUpForm() {
           'Welcome to StartLabX! Redirecting you to your dashboard...',
       });
 
-      router.push('/dashboard');
-      
+      setLoading(false);
+      await navigateTo('/dashboard', { 
+        message: 'Setting up your dashboard...',
+        trackEvent: 'signup_complete_navigation'
+      });
     } catch (error: any) {
       console.error("Signup failed:", error);
+      
+      // Track failed signup
+      await analyticsService.trackSignUp(data.accountType, false);
+      await analyticsService.trackError('signup_error', error.message, 'signup_form');
+
       toast({
         variant: "destructive",
         title: 'Sign Up Failed',
@@ -316,7 +342,11 @@ export function SignUpForm() {
           />
           )}
 
-          <Button disabled={loading || !accountType} className="w-full" type="submit">
+          <Button 
+            disabled={loading || !accountType} 
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
+            type="submit"
+          >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {accountType === 'professional' ? 'Request Access' : 'Sign Up'}
           </Button>

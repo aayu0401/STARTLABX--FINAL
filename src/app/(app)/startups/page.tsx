@@ -1,7 +1,11 @@
+'use client';
+
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNavigation } from '@/hooks/use-navigation';
+import { Plus } from 'lucide-react';
 
 const startups = [
   {
@@ -55,14 +59,29 @@ const startups = [
 ];
 
 export default function StartupsPage() {
+  const { navigateTo } = useNavigation();
+
+  const handleListStartup = async () => {
+    await navigateTo('/list-startup', { 
+      message: 'Loading startup form...',
+      trackEvent: 'startups_page_list_startup_click'
+    });
+  };
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Startup Showcase</h2>
           <p className="text-muted-foreground mt-1">Discover innovative startups looking for talent.</p>
         </div>
-        <Button>List a Startup</Button>
+        <Button 
+          onClick={handleListStartup}
+          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shrink-0"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          List Your Startup
+        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {startups.map((startup, index) => (

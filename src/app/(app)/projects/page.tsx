@@ -1,3 +1,6 @@
+"use client";
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -50,14 +53,14 @@ const pipelineStages = [
 ];
 
 const KanbanColumn = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="flex-1 min-w-[300px] bg-secondary/50 rounded-lg p-4">
+  <div className="flex-1 min-w-[280px] sm:min-w-[300px] bg-secondary/50 rounded-lg p-4">
     <h3 className="text-lg font-semibold mb-4 flex items-center justify-between">
       {title}
       <Button variant="ghost" size="icon" className="rounded-full">
         <PlusCircle className="h-5 w-5 text-muted-foreground" />
       </Button>
     </h3>
-    <div className="space-y-4">{children}</div>
+    <div className="space-y-3">{children}</div>
   </div>
 );
 
@@ -66,7 +69,7 @@ const TaskCard = ({ task }: { task: { id: string, title: string, priority: strin
     <CardContent className="p-4">
       <p className="font-medium mb-2">{task.title}</p>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={task.priority === 'High' ? 'destructive' : (task.priority === 'Medium' ? 'default' : 'secondary')} className="capitalize">{task.priority}</Badge>
           {task.tags.map(tag => <Badge key={tag} variant="outline">{tag}</Badge>)}
         </div>
@@ -82,12 +85,15 @@ const TaskCard = ({ task }: { task: { id: string, title: string, priority: strin
 export default function ProjectsPage() {
   return (
     <div className="h-full flex flex-col">
-       <div className="flex items-center justify-between mb-4">
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-            <h2 className="text-3xl font-bold tracking-tight">Project Dashboard</h2>
+            <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Project Dashboard</h2>
             <p className="text-muted-foreground mt-1">Organize tasks, track progress, and collaborate with your team.</p>
         </div>
-        <Button>New Project</Button>
+        <Button>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          New Project
+        </Button>
       </div>
 
       <Tabs defaultValue="board" className="flex-grow flex flex-col">
@@ -99,7 +105,7 @@ export default function ProjectsPage() {
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
         </TabsList>
         <TabsContent value="board" className="flex-grow">
-          <div className="flex gap-6 overflow-x-auto pb-4 h-full">
+          <div className="flex gap-4 overflow-x-auto pb-4 h-full">
             <KanbanColumn title="To Do">
               {tasks.todo.map(task => <TaskCard key={task.id} task={task} />)}
             </KanbanColumn>

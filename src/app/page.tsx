@@ -1,7 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Rocket, Users, Handshake, LayoutDashboard, BrainCircuit, Bot, ArrowRight } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/auth-context';
+import { useNavigation } from '@/hooks/use-navigation';
 import Image from 'next/image';
 
 const featureCards = [
@@ -38,6 +44,20 @@ const featureCards = [
 ];
 
 export default function LandingPage() {
+  const { user, logout } = useAuth();
+  const { navigateTo } = useNavigation();
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const handleDashboardNavigation = async () => {
+    await navigateTo('/dashboard', { 
+      message: 'Loading dashboard...',
+      trackEvent: 'home_to_dashboard_navigation'
+    });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between z-10">
@@ -46,12 +66,43 @@ export default function LandingPage() {
           <span className="text-2xl font-bold font-headline">StartLabX</span>
         </Link>
         <nav className="flex items-center gap-2">
-          <Button asChild variant="ghost">
-            <Link href="/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Sign Up</Link>
-          </Button>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" onClick={handleDashboardNavigation}>
+                Dashboard
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src="https://placehold.co/100x100" alt="@user" />
+                      <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDashboardNavigation}>
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                  <DropdownMenuItem>Settings</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <>
+              <Button asChild variant="ghost">
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </nav>
       </header>
 
@@ -71,9 +122,15 @@ export default function LandingPage() {
                   Our platform connects early-stage founders with top-tier professionals ready to work for equity. Find the perfect team to bring your idea to life without upfront funding.
                 </p>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button asChild size="lg">
-                    <Link href="/signup">Get Started - It's Invite-Only</Link>
-                  </Button>
+                  {user ? (
+                    <Button size="lg" onClick={handleDashboardNavigation}>
+                      Go to Dashboard
+                    </Button>
+                  ) : (
+                    <Button asChild size="lg">
+                      <Link href="/signup">Get Started - It's Invite-Only</Link>
+                    </Button>
+                  )}
                   <Button asChild size="lg" variant="outline">
                     <Link href="#features">
                       Learn More <ArrowRight className="ml-2" />
