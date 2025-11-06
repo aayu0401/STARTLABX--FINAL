@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Textarea } from '../ui/textarea';
+import { Textarea } from '../../../components/ui/textarea';
 import { useNavigation } from '@/hooks/use-navigation';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';

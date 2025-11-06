@@ -1,0 +1,58 @@
+import type { Talent } from './types';
+
+export const talentPool: Talent[] = [
+  {
+    name: 'Alice Johnson',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'woman face',
+    title: 'Senior Frontend Developer',
+    skills: ['React', 'TypeScript', 'Next.js', 'GraphQL', 'Design Systems'],
+    equity: 'Medium',
+    availability: 'Freelance/Equity',
+  },
+  {
+    name: 'Bob Williams',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'man face',
+    title: 'Product Designer (UI/UX)',
+    skills: ['Figma', 'User Research', 'Prototyping', 'Wireframing', 'Mobile UI'],
+    equity: 'Low-Medium',
+    availability: 'Equity',
+  },
+  {
+    name: 'Charlie Brown',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'man face',
+    title: 'Full-Stack Engineer',
+    skills: ['Node.js', 'Python', 'PostgreSQL', 'Docker', 'AWS'],
+    equity: 'High',
+    availability: 'Co-founder',
+  },
+  {
+    name: 'Diana Miller',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'woman face',
+    title: 'Growth Marketing Expert',
+    skills: ['SEO', 'Content Marketing', 'PPC', 'Social Media', 'Analytics'],
+    equity: 'Low',
+    availability: 'Freelance',
+  },
+  {
+    name: 'Ethan Davis',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'man face',
+    title: 'Mobile Developer',
+    skills: ['React Native', 'Swift', 'Kotlin', 'Firebase'],
+    equity: 'Medium',
+    availability: 'Freelance/Equity',
+  },
+  {
+    name: 'Fiona Garcia',
+    avatar: 'https://placehold.co/100x100.png',
+    dataAiHint: 'woman face',
+    title: 'Data Scientist',
+    skills: ['Python', 'TensorFlow', 'PyTorch', 'Machine Learning', 'SQL'],
+    equity: 'Medium-High',
+    availability: 'Equity',
+  },
+];

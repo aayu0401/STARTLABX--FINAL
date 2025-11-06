@@ -35,6 +35,7 @@ export function LoginForm() {
   const [loading, setLoading] = React.useState(false);
   const { navigateTo } = useNavigation();
   const { toast } = useToast();
+  const BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === 'true';
 
   // Track form started when component mounts
   React.useEffect(() => {
@@ -56,7 +57,9 @@ export function LoginForm() {
     await analyticsService.track('login_started');
 
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      if (!BYPASS) {
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+      }
       
       // Track successful login
       await analyticsService.trackLogin(true);

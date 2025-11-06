@@ -14,8 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, User, Wand2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Badge } from '../ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../../../components/ui/avatar';
+import { Badge } from '../../../../components/ui/badge';
 
 const formSchema = z.object({
   startupDescription: z.string().min(50, { message: 'Please provide a detailed description of at least 50 characters.' }),

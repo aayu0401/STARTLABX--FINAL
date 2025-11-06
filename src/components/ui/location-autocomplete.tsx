@@ -157,7 +157,8 @@ export function LocationAutocomplete({
       console.error('Error getting current location:', error);
       
       // Track error
-      analyticsService.trackError('location_autocomplete_error', error.toString(), 'current_location');
+      const message = error instanceof Error ? error.message : String(error);
+      analyticsService.trackError('location_autocomplete_error', message, 'current_location');
     } finally {
       setIsGettingLocation(false);
     }
