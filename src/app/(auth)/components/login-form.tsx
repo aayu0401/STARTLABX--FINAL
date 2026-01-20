@@ -18,8 +18,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/contexts/auth-context';
 import { analyticsService } from '@/services/analytics';
 
 const formSchema = z.object({
@@ -35,7 +34,7 @@ export function LoginForm() {
   const [loading, setLoading] = React.useState(false);
   const { navigateTo } = useNavigation();
   const { toast } = useToast();
-  const BYPASS = process.env.NEXT_PUBLIC_AUTH_BYPASS === 'true';
+  const { login } = useAuth();
 
   // Track form started when component mounts
   React.useEffect(() => {
@@ -52,15 +51,13 @@ export function LoginForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    
+
     // Track login started
     await analyticsService.track('login_started');
 
     try {
-      if (!BYPASS) {
-        await signInWithEmailAndPassword(auth, data.email, data.password);
-      }
-      
+      await login(data.email, data.password);
+
       // Track successful login
       await analyticsService.trackLogin(true);
 
@@ -70,13 +67,13 @@ export function LoginForm() {
       });
 
       setLoading(false);
-      await navigateTo('/dashboard', { 
+      await navigateTo('/dashboard', {
         message: 'Loading your dashboard...',
         trackEvent: 'login_complete_navigation'
       });
     } catch (error: any) {
       console.error("Login failed:", error);
-      
+
       // Track failed login
       await analyticsService.trackLogin(false, error.message);
 
@@ -134,9 +131,9 @@ export function LoginForm() {
             )}
           />
 
-          <Button 
-            disabled={loading} 
-            className="ml-auto w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
+          <Button
+            disabled={loading}
+            className="ml-auto w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
             type="submit"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

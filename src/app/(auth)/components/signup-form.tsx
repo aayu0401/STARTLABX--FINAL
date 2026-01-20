@@ -27,9 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Textarea } from '../../../components/ui/textarea';
 import { useNavigation } from '@/hooks/use-navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { createLegacyUserProfile } from '@/services/firestore';
+import { authService } from '@/services/auth.service';
 import { analyticsService } from '@/services/analytics';
 
 const formSchema = z
@@ -51,7 +49,7 @@ const formSchema = z
   .superRefine((data, ctx) => {
     if (data.accountType === 'professional') {
       if (!data.inviteCode || data.inviteCode.length < 6) {
-         ctx.addIssue({
+        ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['inviteCode'],
           message: 'A valid invite code is required for professionals.',
@@ -71,7 +69,7 @@ const formSchema = z
           message: 'Please list at least one skill.',
         });
       }
-       if (!data.availability) {
+      if (!data.availability) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['availability'],
@@ -107,37 +105,38 @@ export function SignUpForm() {
 
   const onSubmit = async (data: UserFormValue) => {
     setLoading(true);
-    
+
     // Track signup started
-    await analyticsService.track('sign_up_started', { 
-      account_type: data.accountType 
+    await analyticsService.track('sign_up_started', {
+      account_type: data.accountType
     });
 
     try {
-      // 1. Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-      const user = userCredential.user;
-
-      // Set user properties for analytics
-      await analyticsService.setUser(user.uid, {
-        account_type: data.accountType,
-        full_name: data.fullName,
+      // Register user with backend
+      const response = await authService.register({
         email: data.email,
-      });
-
-      // 2. Create user profile in Firestore
-      await createLegacyUserProfile({
-        uid: user.uid,
-        email: data.email,
+        password: data.password,
         fullName: data.fullName,
         accountType: data.accountType,
         title: data.title,
-        skills: data.skills,
+        skills: data.skills?.split(',').map(s => s.trim()),
         availability: data.availability,
+        inviteCode: data.inviteCode,
+      });
+
+      // Store tokens
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', response.data.token);
+        if (response.data.refreshToken) {
+          localStorage.setItem('refresh_token', response.data.refreshToken);
+        }
+      }
+
+      // Set user properties for analytics
+      await analyticsService.setUser(response.data.userId, {
+        account_type: data.accountType,
+        full_name: data.fullName,
+        email: data.email,
       });
 
       // Track successful signup
@@ -146,17 +145,17 @@ export function SignUpForm() {
       toast({
         title: 'Account Created!',
         description:
-          'Welcome to StartLabX! Redirecting you to your dashboard...',
+          'Welcome to EquityBuild! Redirecting you to your dashboard...',
       });
 
       setLoading(false);
-      await navigateTo('/dashboard', { 
+      await navigateTo('/dashboard', {
         message: 'Setting up your dashboard...',
         trackEvent: 'signup_complete_navigation'
       });
     } catch (error: any) {
       console.error("Signup failed:", error);
-      
+
       // Track failed signup
       await analyticsService.trackSignUp(data.accountType, false);
       await analyticsService.trackError('signup_error', error.message, 'signup_form');
@@ -250,101 +249,101 @@ export function SignUpForm() {
               </FormItem>
             )}
           />
-          
+
           {accountType === 'professional' && (
             <div className='space-y-4 p-4 border rounded-lg bg-secondary/50'>
-               <h3 className="text-sm font-medium text-muted-foreground">Professional Profile</h3>
-                <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Your Title</FormLabel>
-                        <FormControl>
-                        <Input placeholder="e.g., Senior Frontend Developer" disabled={loading} {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="skills"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Skills</FormLabel>
-                        <FormControl>
-                        <Textarea placeholder="e.g., React, TypeScript, Figma..." disabled={loading} {...field} />
-                        </FormControl>
-                         <FormDescription>
-                          Enter a comma-separated list of your top skills.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                  control={form.control}
-                  name="availability"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Availability</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="What are you looking for?" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="cofounder">Co-founder (Equity)</SelectItem>
-                          <SelectItem value="equity">Early Employee (Equity)</SelectItem>
-                          <SelectItem value="freelance">Freelance / Contract</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="inviteCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Invite Code</FormLabel>
+              <h3 className="text-sm font-medium text-muted-foreground">Professional Profile</h3>
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Senior Frontend Developer" disabled={loading} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="skills"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Skills</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="e.g., React, TypeScript, Figma..." disabled={loading} {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Enter a comma-separated list of your top skills.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="availability"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Availability</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
                       <FormControl>
-                        <Input
-                          placeholder="Enter your invite code"
-                          disabled={loading}
-                          {...field}
-                        />
+                        <SelectTrigger>
+                          <SelectValue placeholder="What are you looking for?" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormDescription>
-                        Professional accounts require an invite code.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        <SelectItem value="cofounder">Co-founder (Equity)</SelectItem>
+                        <SelectItem value="equity">Early Employee (Equity)</SelectItem>
+                        <SelectItem value="freelance">Freelance / Contract</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="inviteCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Invite Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your invite code"
+                        disabled={loading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Professional accounts require an invite code.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           )}
-          
+
           {accountType === 'startup' && (
             <FormField
-            control={form.control}
-            name="inviteCode"
-            render={({ field }) => (
-              <FormItem className="hidden">
-                <FormControl>
-                  <Input {...field} value="startup-no-code-needed"/>
-                </FormControl>
-              </FormItem>
-            )}
-          />
+              control={form.control}
+              name="inviteCode"
+              render={({ field }) => (
+                <FormItem className="hidden">
+                  <FormControl>
+                    <Input {...field} value="startup-no-code-needed" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           )}
 
-          <Button 
-            disabled={loading || !accountType} 
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]" 
+          <Button
+            disabled={loading || !accountType}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
             type="submit"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

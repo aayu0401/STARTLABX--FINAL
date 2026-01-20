@@ -1,167 +1,106 @@
-import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
-import { z } from 'zod';
+// User settings service - Backend API integration (no Firebase)
+import { apiClient } from '@/lib/api-client';
 
-// Settings schemas
-const NotificationSettingsSchema = z.object({
-  email: z.boolean().default(true),
-  push: z.boolean().default(true),
-  matches: z.boolean().default(true),
-  messages: z.boolean().default(true),
-  updates: z.boolean().default(false),
-  marketing: z.boolean().default(false),
-});
+export interface NotificationSettings {
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+  marketing: boolean;
+  updates: boolean;
+  mentions: boolean;
+  comments: boolean;
+  likes: boolean;
+}
 
-const PrivacySettingsSchema = z.object({
-  profileVisibility: z.boolean().default(true),
-  showEmail: z.boolean().default(false),
-  showActivity: z.boolean().default(true),
-  allowDirectMessages: z.boolean().default(true),
-  showOnlineStatus: z.boolean().default(true),
-});
+export interface PrivacySettings {
+  profileVisibility: boolean;
+  showEmail: boolean;
+  showPhone: boolean;
+  showLocation: boolean;
+  allowMessages: boolean;
+  allowConnections: boolean;
+}
 
-const AppearanceSettingsSchema = z.object({
-  theme: z.enum(['light', 'dark', 'system']).default('system'),
-  language: z.string().default('en'),
-  timezone: z.string().default('UTC'),
-  dateFormat: z.enum(['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD']).default('MM/DD/YYYY'),
-});
+export interface UserSettings {
+  userId: string;
+  notifications: NotificationSettings;
+  privacy: PrivacySettings;
+  updatedAt: string;
+}
 
-const SecuritySettingsSchema = z.object({
-  twoFactorEnabled: z.boolean().default(false),
-  sessionTimeout: z.number().default(30), // minutes
-  loginNotifications: z.boolean().default(true),
-  deviceTracking: z.boolean().default(true),
-});
+// Default settings
+const defaultNotificationSettings: NotificationSettings = {
+  email: true,
+  push: true,
+  sms: false,
+  marketing: false,
+  updates: true,
+  mentions: true,
+  comments: true,
+  likes: false,
+};
 
-const UserSettingsSchema = z.object({
-  uid: z.string(),
-  notifications: NotificationSettingsSchema,
-  privacy: PrivacySettingsSchema,
-  appearance: AppearanceSettingsSchema,
-  security: SecuritySettingsSchema,
-  lastUpdated: z.date(),
-  createdAt: z.date(),
-});
+const defaultPrivacySettings: PrivacySettings = {
+  profileVisibility: true,
+  showEmail: false,
+  showPhone: false,
+  showLocation: true,
+  allowMessages: true,
+  allowConnections: true,
+};
 
-export type NotificationSettings = z.infer<typeof NotificationSettingsSchema>;
-export type PrivacySettings = z.infer<typeof PrivacySettingsSchema>;
-export type AppearanceSettings = z.infer<typeof AppearanceSettingsSchema>;
-export type SecuritySettings = z.infer<typeof SecuritySettingsSchema>;
-export type UserSettings = z.infer<typeof UserSettingsSchema>;
-
-// Default settings for new users
-const getDefaultSettings = (uid: string): UserSettings => ({
-  uid,
-  notifications: NotificationSettingsSchema.parse({}),
-  privacy: PrivacySettingsSchema.parse({}),
-  appearance: AppearanceSettingsSchema.parse({}),
-  security: SecuritySettingsSchema.parse({}),
-  lastUpdated: new Date(),
-  createdAt: new Date(),
-});
-
-export async function getUserSettings(uid: string): Promise<UserSettings> {
+// Get user settings from backend
+export async function getUserSettings(userId: string): Promise<UserSettings> {
   try {
-    const settingsRef = doc(db, 'user_settings', uid);
-    const settingsDoc = await getDoc(settingsRef);
-    
-    if (!settingsDoc.exists()) {
-      // Create default settings for new user
-      const defaultSettings = getDefaultSettings(uid);
-      await setDoc(settingsRef, {
-        ...defaultSettings,
-        lastUpdated: new Date(),
-        createdAt: new Date(),
-      });
-      return defaultSettings;
-    }
-    
-    const data = settingsDoc.data();
-    return UserSettingsSchema.parse({
-      ...data,
-      lastUpdated: data.lastUpdated?.toDate() || new Date(),
-      createdAt: data.createdAt?.toDate() || new Date(),
-    });
+    const response = await apiClient.get(`/api/users/${userId}/settings`);
+    return response.data;
   } catch (error) {
-    console.error('Error fetching user settings:', error);
-    return getDefaultSettings(uid);
+    console.log('Using default settings:', error);
+    // Return default settings if backend not available
+    return {
+      userId,
+      notifications: defaultNotificationSettings,
+      privacy: defaultPrivacySettings,
+      updatedAt: new Date().toISOString(),
+    };
   }
 }
 
-export async function updateUserSettings(
-  uid: string, 
-  updates: Partial<Omit<UserSettings, 'uid' | 'createdAt' | 'lastUpdated'>>
-): Promise<void> {
-  try {
-    const settingsRef = doc(db, 'user_settings', uid);
-    
-    await updateDoc(settingsRef, {
-      ...updates,
-      lastUpdated: new Date(),
-    });
-  } catch (error) {
-    console.error('Error updating user settings:', error);
-    throw error;
-  }
-}
-
+// Update notification settings
 export async function updateNotificationSettings(
-  uid: string, 
-  notifications: Partial<NotificationSettings>
+  userId: string,
+  settings: Partial<NotificationSettings>
 ): Promise<void> {
   try {
-    const currentSettings = await getUserSettings(uid);
-    await updateUserSettings(uid, {
-      notifications: { ...currentSettings.notifications, ...notifications }
-    });
+    await apiClient.patch(`/api/users/${userId}/settings/notifications`, settings);
   } catch (error) {
-    console.error('Error updating notification settings:', error);
+    console.error('Failed to update notification settings:', error);
     throw error;
   }
 }
 
+// Update privacy settings
 export async function updatePrivacySettings(
-  uid: string, 
-  privacy: Partial<PrivacySettings>
+  userId: string,
+  settings: Partial<PrivacySettings>
 ): Promise<void> {
   try {
-    const currentSettings = await getUserSettings(uid);
-    await updateUserSettings(uid, {
-      privacy: { ...currentSettings.privacy, ...privacy }
-    });
+    await apiClient.patch(`/api/users/${userId}/settings/privacy`, settings);
   } catch (error) {
-    console.error('Error updating privacy settings:', error);
+    console.error('Failed to update privacy settings:', error);
     throw error;
   }
 }
 
-export async function updateAppearanceSettings(
-  uid: string, 
-  appearance: Partial<AppearanceSettings>
+// Update all settings
+export async function updateUserSettings(
+  userId: string,
+  settings: Partial<UserSettings>
 ): Promise<void> {
   try {
-    const currentSettings = await getUserSettings(uid);
-    await updateUserSettings(uid, {
-      appearance: { ...currentSettings.appearance, ...appearance }
-    });
+    await apiClient.put(`/api/users/${userId}/settings`, settings);
   } catch (error) {
-    console.error('Error updating appearance settings:', error);
-    throw error;
-  }
-}
-
-export async function updateSecuritySettings(
-  uid: string, 
-  security: Partial<SecuritySettings>
-): Promise<void> {
-  try {
-    const currentSettings = await getUserSettings(uid);
-    await updateUserSettings(uid, {
-      security: { ...currentSettings.security, ...security }
-    });
-  } catch (error) {
-    console.error('Error updating security settings:', error);
+    console.error('Failed to update user settings:', error);
     throw error;
   }
 }
