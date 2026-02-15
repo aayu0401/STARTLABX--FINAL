@@ -176,18 +176,6 @@ npm run lint
 
 Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 🙏 Acknowledgments
-
-- Next.js team
-- Radix UI
-- Tailwind CSS
-- OpenAI
-
-## 📧 Contact
 
 - Website: [startlabx.com](https://startlabx.com)
 - Email: support@startlabx.com
