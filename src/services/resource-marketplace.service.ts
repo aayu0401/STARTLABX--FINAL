@@ -1,131 +1,154 @@
-import apiClient from '../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
 export interface Resource {
     id: string;
-    userId: string;
-    type: 'professional' | 'freelancer' | 'advisor';
-    name: string;
     title: string;
-    avatar?: string;
-    skills: string[];
-    experience: number;
-    hourlyRate?: number;
-    equityInterest: boolean;
-    availability: 'immediate' | 'within_week' | 'within_month' | 'not_available';
-    location: string;
-    remote: boolean;
-    bio: string;
-    portfolio?: string[];
-    rating: number;
-    reviewCount: number;
-    verified: boolean;
-}
-
-export interface HiringRequest {
-    id: string;
-    startupId: string;
-    resourceId: string;
-    type: 'hourly' | 'equity' | 'salary' | 'hybrid';
-    role: string;
     description: string;
-    compensation: {
-        hourlyRate?: number;
-        equityPercentage?: number;
-        salary?: number;
-        currency?: string;
-    };
-    duration?: string;
-    status: 'pending' | 'accepted' | 'rejected' | 'negotiating' | 'active' | 'completed';
-    proposalMessage: string;
+    category: 'tool' | 'service' | 'template' | 'guide' | 'course' | 'other' | 'talent'; // Added talent
+    type: 'free' | 'freemium' | 'paid' | 'hourly' | 'equity' | 'hybrid'; // Added talent types
+    price?: number;
+    currency?: string;
+    url?: string; // Made optional
+    imageUrl?: string;
+    provider?: string; // Made optional
+    rating: number; // Component expects this
+    reviewCount: number; // Component expects this
+    tags: string[];
+    featured?: boolean;
     createdAt: Date;
-    updatedAt: Date;
+    // Talent fields
+    name?: string;
+    avatar?: string;
+    bio?: string;
+    skills?: string[];
+    verified?: boolean;
+    location?: string;
+    hourlyRate?: number;
+    availability?: string;
+    equityInterest?: boolean;
 }
 
 export interface ResourceFilter {
-    skills?: string[];
-    type?: string[];
+    category?: string;
+    type?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    tags?: string[];
+    search?: string;
+    featured?: boolean;
+    // Talent filters
     availability?: string[];
-    minRate?: number;
-    maxRate?: number;
     equityOnly?: boolean;
     remote?: boolean;
-    location?: string;
     verified?: boolean;
 }
 
 class ResourceMarketplaceService {
-    private baseUrl = '/api/resources';
-
-    /**
-     * Search for resources/talent
-     */
-    async searchResources(filters?: ResourceFilter, page = 1, limit = 20): Promise<{
-        resources: Resource[];
-        total: number;
-        page: number;
-        totalPages: number;
-    }> {
-        const response = await apiClient.get(`${this.baseUrl}/search`, {
-            params: { ...filters, page, limit }
-        });
-        return response.data;
+    async getResources(filter?: ResourceFilter): Promise<Resource[]> {
+        try {
+            const response = await apiClient.get('/api/marketplace/resources', {
+                params: filter,
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error getting resources:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get resource details
-     */
-    async getResource(resourceId: string): Promise<Resource> {
-        const response = await apiClient.get(`${this.baseUrl}/${resourceId}`);
-        return response.data;
+    async getResource(id: string): Promise<Resource> {
+        try {
+            const response = await apiClient.get(`/api/marketplace/resources/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting resource:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get AI-matched resources for a startup
-     */
-    async getMatchedResources(startupId: string, role?: string): Promise<Resource[]> {
-        const response = await apiClient.get(`${this.baseUrl}/matches/${startupId}`, {
-            params: { role }
-        });
-        return response.data;
+    async getFeaturedResources(): Promise<Resource[]> {
+        try {
+            const response = await apiClient.get('/api/marketplace/resources/featured');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting featured resources:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Send hiring request
-     */
-    async sendHiringRequest(request: Omit<HiringRequest, 'id' | 'status' | 'createdAt' | 'updatedAt'>): Promise<HiringRequest> {
-        const response = await apiClient.post(`${this.baseUrl}/hire`, request);
-        return response.data;
+    async searchResources(query: string): Promise<Resource[]> {
+        try {
+            const response = await apiClient.get('/api/marketplace/resources/search', {
+                params: { q: query },
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error searching resources:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get hiring requests (sent or received)
-     */
-    async getHiringRequests(type: 'sent' | 'received', status?: string): Promise<HiringRequest[]> {
-        const response = await apiClient.get(`${this.baseUrl}/hiring-requests`, {
-            params: { type, status }
-        });
-        return response.data;
+    async getResourcesByCategory(category: string): Promise<Resource[]> {
+        try {
+            const response = await apiClient.get(`/api/marketplace/resources/category/${category}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting resources by category:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Update hiring request status
-     */
-    async updateHiringRequest(requestId: string, status: string, message?: string): Promise<HiringRequest> {
-        const response = await apiClient.put(`${this.baseUrl}/hiring-requests/${requestId}`, {
-            status,
-            message
-        });
-        return response.data;
+    async saveResource(resourceId: string): Promise<void> {
+        try {
+            await apiClient.post(`/api/marketplace/resources/${resourceId}/save`);
+        } catch (error) {
+            console.error('Error saving resource:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get instant availability resources
-     */
-    async getInstantResources(skills: string[]): Promise<Resource[]> {
-        const response = await apiClient.post(`${this.baseUrl}/instant`, { skills });
-        return response.data;
+    async unsaveResource(resourceId: string): Promise<void> {
+        try {
+            await apiClient.delete(`/api/marketplace/resources/${resourceId}/save`);
+        } catch (error) {
+            console.error('Error unsaving resource:', error);
+            throw error;
+        }
+    }
+
+    async sendHiringRequest(data: {
+        startupId: string;
+        resourceId: string;
+        type: string;
+        role: string;
+        description: string;
+        compensation: {
+            hourlyRate?: number;
+            equityPercentage?: number;
+            salary?: number;
+            currency: string;
+        };
+        duration: string;
+        proposalMessage: string;
+    }): Promise<void> {
+        try {
+            await apiClient.post('/api/marketplace/hire', data);
+        } catch (error) {
+            console.error('Error sending hiring request:', error);
+            throw error;
+        }
+    }
+
+    async getSavedResources(): Promise<Resource[]> {
+        try {
+            const response = await apiClient.get('/api/marketplace/resources/saved');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting saved resources:', error);
+            throw error;
+        }
     }
 }
 
-export const resourceMarketplaceService = new ResourceMarketplaceService();
+const resourceMarketplaceService = new ResourceMarketplaceService();
 export default resourceMarketplaceService;

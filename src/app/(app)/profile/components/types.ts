@@ -1,13 +1,13 @@
 export type AccountType = 'startup' | 'professional';
 
 export interface UserProfileData {
-  fullName: string;
+  name: string;
   email: string;
   accountType: AccountType;
   title?: string;
   companyName?: string;
   description?: string;
-  skills?: string; // comma-separated
+  skills?: string[];
   industry?: string;
   stage?: string;
   fundingStatus?: string;

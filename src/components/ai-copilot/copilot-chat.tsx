@@ -8,6 +8,7 @@ import { Card } from '../ui/card';
 import { Avatar } from '../ui/avatar';
 import aiCopilotService, { Message } from '@/services/ai-copilot.service';
 import { cn } from '@/lib/utils';
+import { VoiceMic } from '../ui/voice-mic';
 
 interface CopilotChatProps {
     conversationId?: string;
@@ -36,6 +37,7 @@ export function CopilotChat({
         } else {
             // Add welcome message
             setMessages([{
+                id: 'welcome',
                 role: 'assistant',
                 content: userType === 'startup'
                     ? "👋 Hi! I'm your AI Copilot. I'm here to help you build and scale your startup. Ask me anything about team building, equity, fundraising, or strategy!"
@@ -64,6 +66,7 @@ export function CopilotChat({
         if (!input.trim() || isLoading) return;
 
         const userMessage: Message = {
+            id: Math.random().toString(),
             role: 'user',
             content: input,
             timestamp: new Date()
@@ -84,6 +87,7 @@ export function CopilotChat({
             });
 
             const assistantMessage: Message = {
+                id: Math.random().toString(),
                 role: 'assistant',
                 content: response.message,
                 timestamp: new Date(),
@@ -98,6 +102,7 @@ export function CopilotChat({
             console.error('Failed to send message:', error);
 
             const errorMessage: Message = {
+                id: Math.random().toString(),
                 role: 'assistant',
                 content: "I'm sorry, I encountered an error. Please try again.",
                 timestamp: new Date()
@@ -225,12 +230,16 @@ export function CopilotChat({
 
             {/* Input */}
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    <VoiceMic
+                        onResult={(text) => setInput(prev => prev + (prev ? ' ' : '') + text)}
+                        disabled={isLoading}
+                    />
                     <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Ask me anything..."
+                        placeholder="Ask me anything... (or use voice)"
                         disabled={isLoading}
                         className="flex-1"
                     />

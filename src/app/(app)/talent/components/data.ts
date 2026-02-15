@@ -2,6 +2,7 @@ import type { Talent } from './types';
 
 export const talentPool: Talent[] = [
   {
+    id: 't1',
     name: 'Alice Johnson',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman face',
@@ -11,6 +12,7 @@ export const talentPool: Talent[] = [
     availability: 'Freelance/Equity',
   },
   {
+    id: 't2',
     name: 'Bob Williams',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'man face',
@@ -20,6 +22,7 @@ export const talentPool: Talent[] = [
     availability: 'Equity',
   },
   {
+    id: 't3',
     name: 'Charlie Brown',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'man face',
@@ -29,6 +32,7 @@ export const talentPool: Talent[] = [
     availability: 'Co-founder',
   },
   {
+    id: 't4',
     name: 'Diana Miller',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman face',
@@ -38,6 +42,7 @@ export const talentPool: Talent[] = [
     availability: 'Freelance',
   },
   {
+    id: 't5',
     name: 'Ethan Davis',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'man face',
@@ -47,6 +52,7 @@ export const talentPool: Talent[] = [
     availability: 'Freelance/Equity',
   },
   {
+    id: 't6',
     name: 'Fiona Garcia',
     avatar: 'https://placehold.co/100x100.png',
     dataAiHint: 'woman face',

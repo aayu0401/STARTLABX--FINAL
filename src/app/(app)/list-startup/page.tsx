@@ -13,8 +13,8 @@ import { z } from 'zod';
 import { useAuth } from '@/contexts/auth-context';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useToast } from '@/hooks/use-toast';
-import { createStartupListing } from '@/services/startup-listings';
-import { analyticsService } from '@/services/analytics';
+import { createStartupListing } from '@/services/startup-listings.service';
+import { analyticsService } from '@/services/analytics.service';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,16 +29,16 @@ const listingFormSchema = z.object({
   industry: z.string().min(1, "Please select an industry"),
   location: z.string().min(1, "Location is required"),
   stage: z.enum(['idea', 'mvp', 'early_revenue', 'growth', 'scaling']),
-  
+
   // What they're looking for
   lookingFor: z.array(z.string()).min(1, "Select at least one role"),
-  
+
   // Work preferences
   workArrangement: z.enum(['remote', 'hybrid', 'onsite', 'flexible']),
   timeCommitment: z.enum(['part_time', 'full_time', 'flexible']),
   equityMin: z.number().min(0).max(100),
   equityMax: z.number().min(0).max(100),
-  
+
   // Optional detailed info
   description: z.string().optional(),
   problemSolving: z.string().optional(),
@@ -124,8 +124,8 @@ export default function ListStartupPage() {
         <Card className="w-full max-w-md">
           <CardContent className="p-6 text-center">
             <p className="text-muted-foreground">Only startup accounts can create listings.</p>
-            <Button 
-              className="mt-4" 
+            <Button
+              className="mt-4"
               onClick={() => navigateTo('/dashboard', { message: 'Redirecting...' })}
             >
               Go to Dashboard
@@ -138,7 +138,7 @@ export default function ListStartupPage() {
 
   const onSubmit = async (data: ListingFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       // Track listing creation attempt
       await analyticsService.track('startup_listing_creation_started', {
@@ -180,7 +180,7 @@ export default function ListStartupPage() {
         ...(Object.keys(socialLinks).length > 0 && { socialLinks }),
       };
 
-      const listingId = await createStartupListing(user.uid, listingData);
+      const listingId = await createStartupListing(user.id, listingData);
 
       // Track successful creation
       await analyticsService.track('startup_listing_created', {
@@ -195,14 +195,14 @@ export default function ListStartupPage() {
       });
 
       // Navigate to the listing or back to dashboard
-      await navigateTo('/dashboard', { 
+      await navigateTo('/dashboard', {
         message: 'Redirecting to dashboard...',
         trackEvent: 'post_listing_navigation'
       });
 
     } catch (error: any) {
       console.error('Error creating startup listing:', error);
-      
+
       // Track error
       await analyticsService.trackError('startup_listing_creation_error', error.message, 'list_startup_form');
 

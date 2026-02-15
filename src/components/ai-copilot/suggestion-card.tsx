@@ -8,11 +8,13 @@ import { Badge } from '../ui/badge';
 import aiCopilotService, { Suggestion } from '@/services/ai-copilot.service';
 import { cn } from '@/lib/utils';
 
-const iconMap = {
+const iconMap: Record<string, any> = {
     action: CheckCircle,
     insight: Lightbulb,
     recommendation: TrendingUp,
-    warning: AlertTriangle
+    warning: AlertTriangle,
+    resource: ExternalLink,
+    connection: ExternalLink
 };
 
 const priorityColors = {

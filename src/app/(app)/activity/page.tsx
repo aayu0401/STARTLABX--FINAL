@@ -213,7 +213,7 @@ export default function ActivityPage() {
                                         <div className="mt-3 flex gap-2">
                                             {Object.entries(activity.metadata).map(([key, value]) => (
                                                 <Badge key={key} variant="glass" className="text-xs">
-                                                    {key}: {value}
+                                                    {key}: {String(value)}
                                                 </Badge>
                                             ))}
                                         </div>

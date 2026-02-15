@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import resourceMarketplaceService, { Resource, ResourceFilter } from '@/services/resource-marketplace.service';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 export function ResourceMarketplace() {
     const [resources, setResources] = useState<Resource[]>([]);
@@ -25,8 +26,8 @@ export function ResourceMarketplace() {
     const loadResources = async () => {
         setIsLoading(true);
         try {
-            const response = await resourceMarketplaceService.searchResources(filters);
-            setResources(response.resources);
+            const data = await resourceMarketplaceService.getResources(filters);
+            setResources(data);
         } catch (error) {
             console.error('Failed to load resources:', error);
         } finally {
@@ -121,17 +122,17 @@ export function ResourceMarketplace() {
                             <div className="flex items-start gap-4 mb-4">
                                 <Avatar className="w-16 h-16">
                                     {resource.avatar ? (
-                                        <img src={resource.avatar} alt={resource.name} />
+                                        <img src={resource.avatar} alt={resource.name || resource.title} />
                                     ) : (
                                         <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xl font-bold">
-                                            {resource.name.charAt(0)}
+                                            {(resource.name || resource.title).charAt(0)}
                                         </div>
                                     )}
                                 </Avatar>
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h4 className="font-semibold truncate">{resource.name}</h4>
+                                        <h4 className="font-semibold truncate">{resource.name || resource.title}</h4>
                                         {resource.verified && (
                                             <Verified className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                         )}
@@ -141,26 +142,26 @@ export function ResourceMarketplace() {
                                     </p>
                                     <div className="flex items-center gap-1 mt-1">
                                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                        <span className="text-sm font-medium">{resource.rating.toFixed(1)}</span>
-                                        <span className="text-xs text-gray-500">({resource.reviewCount})</span>
+                                        <span className="text-sm font-medium">{resource.rating?.toFixed(1) || 'N/A'}</span>
+                                        <span className="text-xs text-gray-500">({resource.reviewCount || 0})</span>
                                     </div>
                                 </div>
                             </div>
 
                             <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 line-clamp-2">
-                                {resource.bio}
+                                {resource.bio || resource.description}
                             </p>
 
                             {/* Skills */}
                             <div className="flex flex-wrap gap-1 mb-4">
-                                {resource.skills.slice(0, 3).map((skill, index) => (
+                                {(resource.skills || resource.tags || []).slice(0, 3).map((skill, index) => (
                                     <Badge key={index} variant="glass" className="text-xs">
                                         {skill}
                                     </Badge>
                                 ))}
-                                {resource.skills.length > 3 && (
+                                {(resource.skills || resource.tags || []).length > 3 && (
                                     <Badge variant="glass" className="text-xs">
-                                        +{resource.skills.length - 3}
+                                        +{(resource.skills || resource.tags || []).length - 3}
                                     </Badge>
                                 )}
                             </div>
@@ -169,7 +170,7 @@ export function ResourceMarketplace() {
                             <div className="flex items-center justify-between mb-4 text-sm">
                                 <div className="flex items-center gap-1 text-gray-600">
                                     <Clock className="w-4 h-4" />
-                                    <span className="capitalize">{resource.availability.replace('_', ' ')}</span>
+                                    <span className="capitalize">{resource.availability?.replace('_', ' ') || 'Ask for availability'}</span>
                                 </div>
 
                                 {resource.hourlyRate && (
@@ -239,10 +240,14 @@ function HireModal({ resource, onClose }: { resource: Resource; onClose: () => v
         message: ''
     });
 
+    const { user } = useAuth();
+
     const handleSubmit = async () => {
+        if (!user?.id) return;
+
         try {
             await resourceMarketplaceService.sendHiringRequest({
-                startupId: 'current-startup-id', // TODO: Get from context
+                startupId: user.id,
                 resourceId: resource.id,
                 type: hiretype,
                 role: formData.role,

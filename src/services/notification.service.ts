@@ -2,71 +2,100 @@ import { apiClient } from '@/lib/api-client';
 
 export interface Notification {
     id: string;
-    userId: string;
-    type: 'message' | 'connection' | 'opportunity' | 'post' | 'community' | 'system';
+    type: 'mention' | 'like' | 'comment' | 'share' | 'follow' | 'message' | 'connection' | 'invite' | 'system';
     title: string;
-    body: string;
-    data?: any;
-    read: boolean;
-    actionUrl?: string;
+    message: string;
+    icon?: string;
+    avatar?: string;
+    link?: string;
+    isRead: boolean;
+    actionable: boolean;
+    actions?: {
+        label: string;
+        action: 'accept' | 'decline' | 'view' | 'dismiss';
+        url?: string;
+    }[];
     createdAt: string;
 }
 
+export interface NotificationPreferences {
+    email: {
+        mentions: boolean;
+        likes: boolean;
+        comments: boolean;
+        follows: boolean;
+        messages: boolean;
+        connections: boolean;
+        invites: boolean;
+        digest: boolean;
+    };
+    push: {
+        mentions: boolean;
+        likes: boolean;
+        comments: boolean;
+        follows: boolean;
+        messages: boolean;
+        connections: boolean;
+        invites: boolean;
+    };
+    inApp: {
+        mentions: boolean;
+        likes: boolean;
+        comments: boolean;
+        follows: boolean;
+        messages: boolean;
+        connections: boolean;
+        invites: boolean;
+    };
+}
+
 export const notificationService = {
-    getAll: (params?: { page?: number; limit?: number; type?: string; unreadOnly?: boolean }) =>
+    // Get notifications
+    getNotifications: (params?: {
+        page?: number;
+        limit?: number;
+        type?: string;
+        unreadOnly?: boolean;
+    }) =>
         apiClient.get<{ notifications: Notification[]; total: number; unreadCount: number }>('/api/notifications', { params }),
 
+    // Get unread count
     getUnreadCount: () =>
         apiClient.get<{ count: number }>('/api/notifications/unread-count'),
 
+    // Mark as read
     markAsRead: (id: string) =>
         apiClient.put(`/api/notifications/${id}/read`),
 
+    // Mark all as read
     markAllAsRead: () =>
-        apiClient.put('/api/notifications/mark-all-read'),
+        apiClient.put('/api/notifications/read-all'),
 
-    delete: (id: string) =>
+    // Delete notification
+    deleteNotification: (id: string) =>
         apiClient.delete(`/api/notifications/${id}`),
 
+    // Delete all notifications
     deleteAll: () =>
-        apiClient.delete('/api/notifications/delete-all'),
+        apiClient.delete('/api/notifications'),
 
-    // Push notification subscription
-    subscribe: (subscription: any) =>
-        apiClient.post('/api/notifications/subscribe', subscription),
-
-    unsubscribe: () =>
-        apiClient.post('/api/notifications/unsubscribe'),
-
-    // Notification preferences
+    // Get preferences
     getPreferences: () =>
-        apiClient.get('/api/notifications/preferences'),
+        apiClient.get<NotificationPreferences>('/api/notifications/preferences'),
 
-    updatePreferences: (preferences: any) =>
-        apiClient.put('/api/notifications/preferences', preferences),
-};
+    // Update preferences
+    updatePreferences: (preferences: Partial<NotificationPreferences>) =>
+        apiClient.put<NotificationPreferences>('/api/notifications/preferences', preferences),
 
-export const storageService = {
-    upload: (file: File, folder?: string) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        if (folder) {
-            formData.append('folder', folder);
-        }
-        return apiClient.post<{ url: string; thumbnailUrl?: string; fileName: string; fileSize: number }>(
-            '/api/storage/upload',
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
-        );
-    },
+    // Subscribe to push notifications
+    subscribePush: (subscription: PushSubscription) =>
+        apiClient.post('/api/notifications/push/subscribe', subscription),
 
-    delete: (fileUrl: string) =>
-        apiClient.delete('/api/storage/delete', { data: { fileUrl } }),
+    // Unsubscribe from push notifications
+    unsubscribePush: () =>
+        apiClient.post('/api/notifications/push/unsubscribe'),
 
-    getSignedUrl: (fileUrl: string) =>
-        apiClient.get<{ signedUrl: string }>('/api/storage/signed-url', { params: { fileUrl } }),
+    // Perform notification action
+    performAction: (id: string, action: 'accept' | 'decline' | 'view' | 'dismiss') =>
+        apiClient.post(`/api/notifications/${id}/action`, { action }),
 };

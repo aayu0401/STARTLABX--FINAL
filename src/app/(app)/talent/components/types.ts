@@ -1,12 +1,13 @@
-export type EquityLevel = 'Low' | 'Medium' | 'High' | 'Low-Medium' | 'Medium-High';
-export type Availability = 'Freelance' | 'Equity' | 'Freelance/Equity' | 'Co-founder';
-
 export interface Talent {
+  id: string;
   name: string;
-  avatar: string;
-  dataAiHint: string;
+  avatar?: string;
   title: string;
   skills: string[];
-  equity: EquityLevel;
-  availability: Availability;
+  availability?: string;
+  hourlyRate?: number;
+  bio?: string;
+  location?: string;
+  dataAiHint?: string;
+  equity?: string; // Legacy mock field
 }

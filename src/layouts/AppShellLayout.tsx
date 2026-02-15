@@ -4,18 +4,25 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { AuthGuard } from '@/contexts/auth-guard';
 import { useAuth } from '@/contexts/auth-context';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 import { useNavigation } from '@/hooks/use-navigation';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarInset, SidebarRail } from "@/components/ui/sidebar";
-import { Rocket, Users, LayoutDashboard, Wand2, Briefcase, Lightbulb } from "lucide-react";
+import { Rocket, Users, LayoutDashboard, Wand2, Briefcase, Lightbulb, Activity, MessageSquare, Users2, ShieldCheck } from "lucide-react";
 import { SidebarBrand } from '@/layouts/components/SidebarBrand';
 import { SidebarNav } from '@/layouts/components/SidebarNav';
 import { SidebarSecondaryNav } from '@/layouts/components/SidebarSecondaryNav';
 import { HeaderBar } from '@/layouts/components/HeaderBar';
 import { NavItem } from '@/layouts/components/types';
+import { RealtimeStatus } from '@/components/realtime/realtime-status';
+import { RealtimeNotifications } from '@/components/realtime/realtime-notifications';
+import { RealtimeSync } from '@/components/realtime/realtime-sync';
+import { CortexAssistant } from '@/components/ai/cortex-assistant';
 
 const navItems: NavItem[] = [
   { href: "/dashboard", icon: <LayoutDashboard />, label: "Dashboard" },
+  { href: "/feed", icon: <Activity />, label: "Feed" },
+  { href: "/messages", icon: <MessageSquare />, label: "Messages" },
+  { href: "/communities", icon: <Users2 />, label: "Communities" },
   { href: "/startups", icon: <Rocket />, label: "Startups" },
   { href: "/talent", icon: <Users />, label: "Talent Marketplace" },
   { href: "/projects", icon: <Briefcase />, label: "Collaboration" },
@@ -25,19 +32,45 @@ const navItems: NavItem[] = [
 
 export function AppShellLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { logout, userProfile } = useAuth();
   const { navigateTo } = useNavigation();
+
+  const [dynamicNavItems, setDynamicNavItems] = React.useState<NavItem[]>([]);
+
+  React.useEffect(() => {
+    if (!userProfile) return;
+
+    let items = [...navItems];
+
+    // Role-based filtering
+    if (userProfile.accountType === 'professional') {
+      // Professionals don't primarily need the Incubator (Builder)
+      // They focus on finding Startups (Jobs) and Community
+      items = items.filter(item => item.href !== '/incubator');
+    }
+
+    // Admin handling
+    if (userProfile.role === 'admin') {
+      const hasAdmin = items.some(item => item.href === '/admin');
+      if (!hasAdmin) {
+        items.push({ href: "/admin", icon: <ShieldCheck className="text-primary" />, label: "Admin Panel" });
+      }
+    }
+
+    setDynamicNavItems(items);
+  }, [userProfile]);
 
   const getPageTitle = () => {
     if (pathname.startsWith('/profile')) return 'Profile';
     if (pathname.startsWith('/settings')) return 'Settings';
     if (pathname.startsWith('/list-startup')) return 'List Startup';
-    const activeItem = navItems.find(item => pathname.startsWith(item.href));
+    if (pathname.startsWith('/admin')) return 'Admin Panel';
+    const activeItem = dynamicNavItems.find(item => pathname.startsWith(item.href));
     return activeItem ? activeItem.label : 'Dashboard';
   };
 
   const handleLogout = async () => {
-    await analyticsService.trackButtonClick('logout', 'header_dropdown');
+    await analyticsService.trackButtonClick('logout', { context: 'header_dropdown' });
     await logout();
   };
 
@@ -72,7 +105,7 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
               <SidebarBrand />
             </SidebarHeader>
             <SidebarContent>
-              <SidebarNav items={navItems} pathname={pathname} onNavigate={handleNavClick} />
+              <SidebarNav items={dynamicNavItems} pathname={pathname} onNavigate={handleNavClick} />
             </SidebarContent>
             <SidebarFooter className="group-data-[collapsible=icon]:hidden">
               <SidebarSecondaryNav
@@ -96,6 +129,11 @@ export function AppShellLayout({ children }: { children: React.ReactNode }) {
             </div>
           </SidebarInset>
         </div>
+        {/* Global Real-time Services */}
+        <RealtimeStatus />
+        <RealtimeNotifications />
+        <RealtimeSync />
+        <CortexAssistant />
       </SidebarProvider>
     </AuthGuard>
   );

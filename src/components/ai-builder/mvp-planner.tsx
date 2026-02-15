@@ -82,7 +82,7 @@ export function MVPPlanner() {
 
     const calculateProgress = () => {
         if (!mvpPlan) return 0;
-        const completed = mvpPlan.features.filter(f => f.status === 'completed').length;
+        const completed = mvpPlan.features.filter(f => f.status === 'done').length;
         return (completed / mvpPlan.features.length) * 100;
     };
 
@@ -266,7 +266,7 @@ export function MVPPlanner() {
                                                 <Badge className={getPriorityColor(feature.priority)}>
                                                     {feature.priority.replace('_', ' ')}
                                                 </Badge>
-                                                {feature.status === 'completed' && (
+                                                {feature.status === 'done' && (
                                                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                                                 )}
                                             </div>
@@ -283,9 +283,9 @@ export function MVPPlanner() {
                                             onChange={(e) => handleUpdateFeatureStatus(feature.id, e.target.value)}
                                             className="ml-4 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
                                         >
-                                            <option value="pending">Pending</option>
-                                            <option value="in_progress">In Progress</option>
-                                            <option value="completed">Completed</option>
+                                            <option value="todo">Pending</option>
+                                            <option value="in-progress">In Progress</option>
+                                            <option value="done">Completed</option>
                                         </select>
                                     </div>
                                 </div>
@@ -297,7 +297,7 @@ export function MVPPlanner() {
                     <Card className="p-6">
                         <h4 className="font-semibold mb-4">Development Phases</h4>
                         <div className="space-y-4">
-                            {mvpPlan.timeline.phases.map((phase, index) => (
+                            {mvpPlan.timeline.phases.map((phase: any, index: number) => (
                                 <div key={index} className="border-l-4 border-primary pl-4">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Badge variant="gradient">{index + 1}</Badge>
@@ -305,7 +305,7 @@ export function MVPPlanner() {
                                         <span className="text-sm text-gray-500">({phase.duration} weeks)</span>
                                     </div>
                                     <div className="space-y-1">
-                                        {phase.deliverables.map((deliverable, i) => (
+                                        {phase.deliverables.map((deliverable: string, i: number) => (
                                             <p key={i} className="text-sm text-gray-600 dark:text-gray-400">
                                                 • {deliverable}
                                             </p>

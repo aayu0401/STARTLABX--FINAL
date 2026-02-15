@@ -1,32 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Settings, User, Bell, Lock, Palette, Globe, Mail, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, User, Bell, Lock, Palette, Shield } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { authService } from '@/services/auth.service';
+import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { userSettingsService, type NotificationSettings, type PrivacySettings } from '@/services/user-settings';
+import { NotificationsCard } from './components/notifications-card';
+import { PrivacyCard } from './components/privacy-card';
 
 export default function SettingsPage() {
+  const { user, userProfile } = useAuth(); // Assuming context provides this
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
   const [settings, setSettings] = useState({
     // Profile
-    name: 'John Doe',
-    email: 'john@example.com',
-    bio: 'Founder & CEO at TechStartup',
-    location: 'San Francisco, CA',
-    website: 'https://techstartup.com',
-
-    // Notifications
-    emailNotifications: true,
-    pushNotifications: true,
-    weeklyDigest: true,
-    marketingEmails: false,
-
-    // Privacy
-    profileVisibility: 'public',
-    showEmail: false,
-    showLocation: true,
+    name: '',
+    email: '',
+    bio: '',
+    location: '',
+    website: '',
+    title: '',
 
     // Preferences
     theme: 'system',
@@ -34,21 +33,82 @@ export default function SettingsPage() {
     timezone: 'America/Los_Angeles'
   });
 
-  const handleSave = () => {
-    // Save settings
-    alert('Settings saved successfully!');
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    email: true,
+    push: true,
+    matches: true,
+    messages: true,
+    updates: true
+  });
+
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
+    profileVisibility: true,
+    showEmail: false,
+    showActivity: true
+  });
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const data = await userSettingsService.getSettings();
+        setNotificationSettings(data.notifications);
+        setPrivacySettings(data.privacy);
+      } catch (error) {
+        console.error("Failed to load settings", error);
+      }
+    };
+
+    if (userProfile) {
+      setSettings(prev => ({
+        ...prev,
+        name: userProfile.name || '',
+        email: userProfile.email || '',
+        bio: userProfile.bio || '',
+        location: userProfile.location || '',
+        website: userProfile.website || '',
+        title: userProfile.title || '',
+      }));
+      loadSettings();
+    }
+  }, [userProfile]);
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      await authService.updateProfile({ // This calls PUT /api/auth/me/update
+        name: settings.name,
+        bio: settings.bio,
+        location: settings.location,
+        website: settings.website,
+        title: settings.title
+      });
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error("Failed to update profile", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-          <Settings className="w-8 h-8" />
-          Settings
+      <div className="mb-8 animate-in fade-in slide-in-from-left duration-700">
+        <h1 className="text-3xl font-black tracking-tighter text-gradient-blue flex items-center gap-3">
+          <Settings className="w-8 h-8 text-primary animate-float" />
+          Settings Console
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your account settings and preferences
+        <p className="text-muted-foreground mt-1 font-medium">
+          Configure your <span className="text-foreground font-bold underline decoration-primary/30 underline-offset-4">identity</span> and system preferences.
         </p>
       </div>
 
@@ -130,124 +190,40 @@ export default function SettingsPage() {
 
         {/* Notification Settings */}
         <TabsContent value="notifications">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive notifications via email
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.emailNotifications}
-                  onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Push Notifications</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive push notifications in browser
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.pushNotifications}
-                  onChange={(e) => setSettings({ ...settings, pushNotifications: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Weekly Digest</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Get a weekly summary of your activity
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.weeklyDigest}
-                  onChange={(e) => setSettings({ ...settings, weeklyDigest: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Marketing Emails</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Receive updates about new features and offers
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.marketingEmails}
-                  onChange={(e) => setSettings({ ...settings, marketingEmails: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
-              <Button onClick={handleSave} className="gradient-primary">
-                Save Preferences
-              </Button>
-            </div>
-          </Card>
+          <NotificationsCard
+            notifications={notificationSettings}
+            onChange={async (key, value) => {
+              const updates = { [key]: value };
+              setNotificationSettings(prev => ({ ...prev, ...updates }));
+              try {
+                await userSettingsService.updateNotifications(updates);
+                toast({ title: "Success", description: "Notification settings updated" });
+              } catch (error) {
+                toast({ title: "Error", description: "Failed to update notification settings", variant: "destructive" });
+              }
+            }}
+          />
         </TabsContent>
 
         {/* Privacy Settings */}
         <TabsContent value="privacy">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Privacy & Security</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Profile Visibility</label>
-                <select
-                  value={settings.profileVisibility}
-                  onChange={(e) => setSettings({ ...settings, profileVisibility: e.target.value })}
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg"
-                >
-                  <option value="public">Public - Anyone can see</option>
-                  <option value="connections">Connections Only</option>
-                  <option value="private">Private - Only me</option>
-                </select>
-              </div>
+          <div className="space-y-6">
+            <PrivacyCard
+              privacy={privacySettings}
+              onChange={async (key, value) => {
+                const updates = { [key]: value };
+                setPrivacySettings(prev => ({ ...prev, ...updates }));
+                try {
+                  await userSettingsService.updatePrivacy(updates);
+                  toast({ title: "Success", description: "Privacy settings updated" });
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to update privacy settings", variant: "destructive" });
+                }
+              }}
+            />
 
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Show Email Address</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Display email on your profile
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.showEmail}
-                  onChange={(e) => setSettings({ ...settings, showEmail: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div>
-                  <p className="font-medium">Show Location</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Display location on your profile
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={settings.showLocation}
-                  onChange={(e) => setSettings({ ...settings, showLocation: e.target.checked })}
-                  className="rounded"
-                />
-              </div>
-
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Security</h3>
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                 <div className="flex items-start gap-3">
                   <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
@@ -264,12 +240,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
-
-              <Button onClick={handleSave} className="gradient-primary">
-                Save Privacy Settings
-              </Button>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Preferences */}

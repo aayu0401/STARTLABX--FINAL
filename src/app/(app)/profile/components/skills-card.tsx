@@ -5,9 +5,8 @@ import { Briefcase } from 'lucide-react';
 import type { UserProfileData } from './types';
 
 export function SkillsCard({ userProfile }: { userProfile: UserProfileData }) {
-  if (!userProfile.skills) return null;
-  const skills = userProfile.skills.split(',').map(s => s.trim()).filter(Boolean);
-  if (skills.length === 0) return null;
+  if (!userProfile.skills || userProfile.skills.length === 0) return null;
+  const skills = userProfile.skills;
   return (
     <Card>
       <CardHeader>

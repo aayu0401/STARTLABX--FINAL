@@ -6,14 +6,14 @@ import { Users, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Idea } from './types';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 
 export function IdeaCard({ idea }: { idea: Idea }) {
   const onDiscuss = async () => {
-    try { await analyticsService.trackButtonClick('idea_discuss', 'incubator'); } catch {}
+    try { await analyticsService.trackButtonClick('idea_discuss', { context: 'incubator' }); } catch { }
   };
   const onJoin = async () => {
-    try { await analyticsService.trackButtonClick('idea_join_team', 'incubator'); } catch {}
+    try { await analyticsService.trackButtonClick('idea_join_team', { context: 'incubator' }); } catch { }
   };
 
   return (

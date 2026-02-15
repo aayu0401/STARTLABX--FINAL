@@ -1,155 +1,164 @@
-import apiClient from '../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
 export interface Message {
+    id: string;
     role: 'user' | 'assistant' | 'system';
     content: string;
     timestamp: Date;
-    metadata?: {
-        tokens?: number;
-        model?: string;
-    };
+    metadata?: Record<string, any>;
 }
 
 export interface Conversation {
     id: string;
     title: string;
     messages: Message[];
-    context: {
-        userType: 'startup' | 'professional';
-        userProfile?: any;
-        currentPage?: string;
-        relevantData?: any;
-    };
-    status: 'active' | 'archived';
-    tags: string[];
-    lastMessageAt: Date;
-    messageCount?: number;
-    lastMessage?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Suggestion {
     id: string;
-    type: 'action' | 'insight' | 'recommendation' | 'warning';
-    category: 'profile' | 'startup' | 'networking' | 'project' | 'general';
+    type: 'action' | 'insight' | 'recommendation' | 'warning' | 'resource' | 'connection';
     title: string;
     description: string;
+    priority: 'low' | 'medium' | 'high';
+    category?: string;
     actionUrl?: string;
     actionLabel?: string;
-    priority: 'low' | 'medium' | 'high';
-    status: 'pending' | 'viewed' | 'dismissed' | 'completed';
+    status?: 'pending' | 'completed' | 'dismissed';
+    metadata?: Record<string, any>;
 }
 
-export interface ChatRequest {
-    conversationId?: string;
-    message: string;
-    context?: {
-        userType: 'startup' | 'professional';
-        userProfile?: any;
-        currentPage?: string;
-        relevantData?: any;
-    };
-}
-
-export interface ChatResponse {
-    conversationId: string;
-    message: string;
-    tokens: number;
-}
-
-export interface DocumentAnalysisRequest {
-    documentText: string;
-    analysisType: 'contract' | 'pitch_deck' | 'business_plan' | 'general';
-}
-
-export interface DocumentAnalysisResponse {
-    analysis: string;
-    analysisType: string;
+export interface DocumentAnalysis {
+    id?: string;
+    summary: string;
+    keyPoints: string[];
+    suggestions: Suggestion[];
+    sentiment?: 'positive' | 'neutral' | 'negative';
+    analysis?: string;
 }
 
 class AICopilotService {
-    private baseUrl = '/api/copilot';
-
-    /**
-     * Send a message to the AI Copilot
-     */
-    async chat(request: ChatRequest): Promise<ChatResponse> {
-        const response = await apiClient.post<ChatResponse>(`${this.baseUrl}/chat`, request);
-        return response.data;
+    // Chat functionality
+    async chat(params: {
+        message: string;
+        conversationId?: string;
+        context?: Record<string, any>;
+    }): Promise<{ message: string; conversationId: string; tokens?: number }> {
+        try {
+            const response = await apiClient.post('/api/ai/copilot/chat', params);
+            return response.data;
+        } catch (error) {
+            console.error('Error in AI chat:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get conversation history
-     */
-    async getConversations(params?: {
-        status?: 'active' | 'archived';
-        limit?: number;
-        skip?: number;
-    }): Promise<{ conversations: Conversation[]; total: number }> {
-        const response = await apiClient.get(`${this.baseUrl}/conversations`, { params });
-        return response.data;
+    async sendMessage(conversationId: string, message: string): Promise<Message> {
+        try {
+            const response = await apiClient.post(`/api/ai/copilot/chat/${conversationId}`, {
+                message,
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error sending message:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get a specific conversation
-     */
     async getConversation(conversationId: string): Promise<Conversation> {
-        const response = await apiClient.get<Conversation>(
-            `${this.baseUrl}/conversations/${conversationId}`
-        );
-        return response.data;
+        try {
+            const response = await apiClient.get(`/api/ai/copilot/conversations/${conversationId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error getting conversation:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Archive a conversation
-     */
-    async archiveConversation(conversationId: string): Promise<void> {
-        await apiClient.put(`${this.baseUrl}/conversations/${conversationId}/archive`);
+    async getConversations(): Promise<Conversation[]> {
+        try {
+            const response = await apiClient.get('/api/ai/copilot/conversations');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting conversations:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Analyze a document
-     */
-    async analyzeDocument(request: DocumentAnalysisRequest): Promise<DocumentAnalysisResponse> {
-        const response = await apiClient.post<DocumentAnalysisResponse>(
-            `${this.baseUrl}/analyze-document`,
-            request
-        );
-        return response.data;
+    async createConversation(title?: string): Promise<Conversation> {
+        try {
+            const response = await apiClient.post('/api/ai/copilot/conversations', {
+                title: title || 'New Conversation',
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error creating conversation:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get AI-generated suggestions
-     */
-    async getSuggestions(params?: {
-        status?: 'pending' | 'viewed' | 'dismissed' | 'completed';
-        limit?: number;
-    }): Promise<{ suggestions: Suggestion[] }> {
-        const response = await apiClient.get(`${this.baseUrl}/suggestions`, { params });
-        return response.data;
+    async deleteConversation(conversationId: string): Promise<void> {
+        try {
+            await apiClient.delete(`/api/ai/copilot/conversations/${conversationId}`);
+        } catch (error) {
+            console.error('Error deleting conversation:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Update suggestion status
-     */
-    async updateSuggestion(
-        suggestionId: string,
-        status: 'viewed' | 'dismissed' | 'completed'
-    ): Promise<void> {
-        await apiClient.put(`${this.baseUrl}/suggestions/${suggestionId}`, { status });
+    // Suggestions
+    async getSuggestions(params?: { status?: string; category?: string }): Promise<{ suggestions: Suggestion[]; total: number }> {
+        try {
+            const response = await apiClient.get('/api/ai/copilot/suggestions', { params });
+            // Handle if API returns bare array or object
+            if (Array.isArray(response.data)) {
+                return { suggestions: response.data, total: response.data.length };
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Error getting suggestions:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Submit feedback on AI response
-     */
-    async submitFeedback(feedback: {
-        conversationId: string;
-        messageIndex: number;
-        feedback?: string;
-        rating?: number;
-    }): Promise<void> {
-        await apiClient.post(`${this.baseUrl}/feedback`, feedback);
+    async updateSuggestion(suggestionId: string, status: 'pending' | 'completed' | 'dismissed'): Promise<void> {
+        try {
+            await apiClient.patch(`/api/ai/copilot/suggestions/${suggestionId}`, { status });
+        } catch (error) {
+            console.error('Error updating suggestion:', error);
+            throw error;
+        }
+    }
+
+    async dismissSuggestion(suggestionId: string): Promise<void> {
+        return this.updateSuggestion(suggestionId, 'dismissed');
+    }
+
+    // Document analysis
+    async analyzeDocument(params: { documentText: string; analysisType?: string }): Promise<DocumentAnalysis> {
+        try {
+            const response = await apiClient.post('/api/ai/copilot/analyze', params);
+            return response.data;
+        } catch (error) {
+            console.error('Error analyzing document:', error);
+            throw error;
+        }
+    }
+
+    // Quick actions
+    async getQuickActions(context?: string): Promise<Suggestion[]> {
+        try {
+            const response = await apiClient.get('/api/ai/copilot/quick-actions', {
+                params: { context },
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error getting quick actions:', error);
+            throw error;
+        }
     }
 }
 
-export const aiCopilotService = new AICopilotService();
+const aiCopilotService = new AICopilotService();
 export default aiCopilotService;

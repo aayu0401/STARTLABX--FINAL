@@ -3,12 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lightbulb } from 'lucide-react';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 
 export function PitchHero() {
   const onProposeClick = async () => {
     try {
-      await analyticsService.trackButtonClick('propose_new_venture', 'incubator');
+      await analyticsService.trackButtonClick('propose_new_venture', { context: 'incubator' });
     } catch {
       // no-op analytics
     }

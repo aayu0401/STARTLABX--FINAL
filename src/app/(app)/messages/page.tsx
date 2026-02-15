@@ -1,7 +1,10 @@
 'use client';
 
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, Phone, Video, MoreVertical, Paperclip, Smile, Image as ImageIcon, Check, CheckCheck } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -9,34 +12,11 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn, formatDate } from '@/lib/utils';
-import { chatService } from '@/services/chat.service';
+import { chatService, Conversation, Message } from '@/services/chat.service';
 
-interface Conversation {
-    id: string;
-    user: {
-        id: string;
-        name: string;
-        avatar: string;
-        title: string;
-        online: boolean;
-    };
-    lastMessage: {
-        content: string;
-        timestamp: string;
-        read: boolean;
-        fromMe: boolean;
-    };
-    unreadCount: number;
-}
+// Removed local Conversation and Message interfaces
 
-interface Message {
-    id: string;
-    content: string;
-    timestamp: string;
-    fromMe: boolean;
-    read: boolean;
-    type: 'text' | 'image' | 'file';
-}
+import { useSearchParams } from 'next/navigation';
 
 export default function MessagesPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -45,35 +25,90 @@ export default function MessagesPage() {
     const [messageInput, setMessageInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const searchParams = useSearchParams();
+    const startWith = searchParams.get('startWith');
+
+    const activeConversation = conversations.find(c => c.id === selectedConversation);
 
     useEffect(() => {
-        loadConversations();
+        const init = async () => {
+            await loadConversations();
+
+            if (startWith) {
+                // Initialize conversation with specific user
+                try {
+                    const { id } = await apiClient.post<{ id: string }>('/api/chat/conversations', { targetUserId: startWith }).then(res => res.data);
+                    // Refresh list to include new conversation
+                    await loadConversations();
+                    setSelectedConversation(id);
+                } catch (e) {
+                    console.error("Failed to start conversation", e);
+                }
+            }
+        };
+
+        init();
         // Connect to WebSocket
-        // chatService.connect();
+        chatService.connect();
 
         return () => {
-            // chatService.disconnect();
+            chatService.disconnect();
         };
-    }, []);
+    }, [startWith]);
 
     useEffect(() => {
         if (selectedConversation) {
             loadMessages(selectedConversation);
+            chatService.joinConversation(selectedConversation);
         }
+    }, [selectedConversation]);
+
+    // Listen for incoming messages
+    useEffect(() => {
+        const handleNewMessage = (message: Message) => {
+            // Update messages list if viewing this conversation
+            if (selectedConversation && (
+                message.fromMe || message.conversationId === selectedConversation
+            )) {
+                setMessages((prev) => {
+                    // Avoid duplicates
+                    if (prev.some(m => m.id === message.id)) return prev;
+                    return [...prev, message];
+                });
+                // Scroll to bottom
+                scrollToBottom();
+            }
+
+            // Also refresh conversation list to show unread/last message
+            loadConversations();
+        };
+
+        chatService.onMessage(handleNewMessage);
+
+        // No explicit removeListener in current service implementation, 
+        // but disconnect on unmount handles it.
     }, [selectedConversation]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
 
-    const loadConversations = () => {
-        // Mock data - replace with actual API call
-        setConversations(generateMockConversations());
+    const loadConversations = async () => {
+        try {
+            const data = await chatService.getConversations();
+            setConversations(data);
+        } catch (error) {
+            console.error('Failed to load conversations', error);
+        }
     };
 
-    const loadMessages = (conversationId: string) => {
-        // Mock data - replace with actual API call
-        setMessages(generateMockMessages());
+    const loadMessages = async (conversationId: string) => {
+        try {
+            const data = await chatService.getMessages(conversationId);
+            setMessages(data);
+        } catch (error) {
+            console.error('Failed to load messages', error);
+        }
     };
 
     const scrollToBottom = () => {
@@ -83,28 +118,30 @@ export default function MessagesPage() {
     const handleSendMessage = async () => {
         if (!messageInput.trim() || !selectedConversation) return;
 
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            content: messageInput,
-            timestamp: new Date().toISOString(),
-            fromMe: true,
-            read: false,
-            type: 'text',
-        };
+        try {
+            // Optimistic update
+            const newMessage: Message = {
+                id: Date.now().toString(),
+                content: messageInput,
+                timestamp: new Date().toISOString(),
+                fromMe: true,
+                read: false,
+                type: 'text',
+                conversationId: selectedConversation
+            };
+            setMessages(prev => [...prev, newMessage]);
+            setMessageInput('');
 
-        setMessages([...messages, newMessage]);
-        setMessageInput('');
-
-        // Send via WebSocket
-        // chatService.sendMessage(selectedConversation, messageInput);
+            await chatService.sendMessage(selectedConversation, messageInput);
+        } catch (error) {
+            console.error('Failed to send message', error);
+        }
     };
 
     const filteredConversations = conversations.filter(conv =>
         conv.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         conv.user.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    const activeConversation = conversations.find(c => c.id === selectedConversation);
 
     return (
         <div className="h-[calc(100vh-4rem)] bg-gradient-to-br from-background via-background to-primary/5">

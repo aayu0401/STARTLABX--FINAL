@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 
 interface CreatePostModalProps {
     open: boolean;
-    onClose: () => void;
+    onOpenChange: (open: boolean) => void;
     onSubmit: (data: any) => void;
 }
 
@@ -23,7 +23,7 @@ const POST_TYPES = [
     { value: 'ACHIEVEMENT', label: 'Achievement', icon: '🎉', description: 'Celebrate a milestone' },
 ];
 
-export function CreatePostModal({ open, onClose, onSubmit }: CreatePostModalProps) {
+export function CreatePostModal({ open, onOpenChange, onSubmit }: CreatePostModalProps) {
     const [postType, setPostType] = useState('UPDATE');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -49,7 +49,7 @@ export function CreatePostModal({ open, onClose, onSubmit }: CreatePostModalProp
         setHashtags([]);
         setHashtagInput('');
         setVisibility('PUBLIC');
-        onClose();
+        onOpenChange(false);
     };
 
     const addHashtag = () => {
@@ -192,7 +192,7 @@ export function CreatePostModal({ open, onClose, onSubmit }: CreatePostModalProp
                 </div>
 
                 <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={handleClose}>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
                     <Button

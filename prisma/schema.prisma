@@ -1,0 +1,589 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  title         String?
+  bio           String?
+  avatar        String?
+  location      String?
+  website       String?
+  accountType   String    @default("professional") // 'startup' | 'professional'
+  role          String    @default("user") // 'user' | 'admin'
+  
+  // Talent Metadata
+  skills        String?   // JSON string
+  experience    Int?      @default(0)
+  availability  String?   @default("available") // 'available' | 'busy' | 'unavailable'
+  hourlyRate    Float?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  posts         Post[]
+  comments      Comment[]
+  messages      Message[]
+  conversationParticipations ConversationParticipant[]
+  notifications Notification[]
+  ownedCommunities Community[] @relation("OwnedCommunities")
+  communityMemberships CommunityMember[]
+  communityPosts CommunityPost[]
+  passwordResetTokens PasswordResetToken[]
+  savedTalent   SavedTalent[] @relation("UserSavedTalent")
+  savedByUsers  SavedTalent[] @relation("SavedByUser")
+  startups      Startup[]
+  analyticsEvents AnalyticsEvent[]
+  subscription  Subscription?
+  opportunities Opportunity[]
+
+  // AI Startup Ecosystem
+  startupProjects StartupProject[]
+  equityAllocations EquityAllocation[]
+
+  
+  // V5: Founder Verification
+  founderReputation FounderReputation?
+}
+
+// ============================================
+// AI AGENT ECOSYSTEM MODELS
+// ============================================
+
+model StartupProject {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("ideation") // 'ideation', 'validating', 'architecting', 'building', 'testing', 'launched'
+  
+  // Project State & Metadata
+  currentStage String  @default("concept")
+  industry     String?
+  targetAudience String?
+  
+  // Generated Content (JSON Blobs)
+  roadmap      String? // JSON: timeline, milestones
+  techStack    String? // JSON: frontend, backend, database choices
+  features     String? // JSON: list of features
+  branding     String? // JSON: colorPalette, typography, logoUrl
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  tasks       AgentTask[]
+  assets      GeneratedAsset[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  traction    TractionMetrics?
+  milestones  RoadmapMilestone[]
+  risks       RiskAnalysis[]
+  equity      EquityAllocation[]
+  pivots      PivotHistory[]
+  moat        DefensibilityMoat?
+  boardMeetings BoardMeeting[]
+  exitStrategy  ExitStrategy?
+  
+  tractionLevel String   @default("unverified") // 'unverified', 'validated', 'scaling'
+
+  // Founder Operating Rhythm (FOR)
+  dailyActions  DailyAction[]
+  executionStreak Int @default(0)
+  executionDebt   Int @default(0)
+  lastActionDate  DateTime?
+
+
+  // V5: Reality Sync & Governance
+  realitySync     RealitySync?
+  governanceDecisions FounderGovernance[]
+  marketingStrategy   MarketingStrategy?
+}
+
+model DailyAction {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  date          DateTime @default(now())
+  content       String   // The "Top 1 Action"
+  status        String   @default("pending") // 'pending', 'completed', 'missed', 'carried_over'
+  
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RiskAnalysis {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  riskLevel     String   @default("low") // 'low', 'medium', 'high', 'critical'
+  factors       String   // JSON: ["Low Velocity", "High Burn"]
+  recommendation String?
+  
+  createdAt     DateTime @default(now())
+}
+
+model EquityAllocation {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  
+  percentage    Float
+  role          String
+  status        String   @default("proposed") // 'proposed', 'agreed', 'signed'
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+}
+
+model RealitySync {
+  id            String   @id @default(cuid())
+  projectId     String   @unique
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Integrations Status
+  githubConnected  Boolean @default(false)
+  stripeConnected  Boolean @default(false)
+  
+  // Trusted Signals
+  codeCommits      Int     @default(0) // Weekly
+  codeVelocity     Float   @default(0) // PRs merged
+  mrr              Float   @default(0) // Verified Stripe
+  churnRate        Float   @default(0)
+  activeUsers      Int     @default(0)
+  
+  lastSyncedAt     DateTime?
+  updatedAt        DateTime @updatedAt
+}
+
+model FounderGovernance {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Decision Log
+  title         String
+  description   String
+  decidedBy     String   // User ID
+  consensus     String   // 'unanimous', 'majority', 'executive_override'
+  
+  status        String   @default("implemented") // 'proposed', 'implemented', 'reverted'
+  impact        String?  // 'high', 'medium', 'low'
+  
+  createdAt     DateTime @default(now())
+}
+
+model TractionMetrics {
+  id            String   @id @default(cuid())
+  projectId     String   @unique
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  score         Int      @default(0) // 0-100
+  development   Int      @default(0) // GitHub velocity
+  market        Int      @default(0) // Clicks, signups
+  team          Int      @default(0) // Completeness
+  
+  updatedAt     DateTime @updatedAt
+}
+
+model RoadmapMilestone {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  title         String
+  description   String?
+  status        String   @default("pending") // 'pending', 'in_progress', 'completed'
+  dueDate       DateTime?
+  completedAt   DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PivotHistory {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  previousStage String
+  newStage      String
+  reason        String   // "Low Retention", "Market Shift"
+  metricsSnapshot String // JSON: Traction at time of pivot
+  
+  createdAt     DateTime @default(now())
+}
+
+model DefensibilityMoat {
+  id            String   @id @default(cuid())
+  projectId     String   @unique
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  networkEffectsScore Int @default(0)
+  brandScore          Int @default(0)
+  techScore           Int @default(0)
+  dataMoatScore       Int @default(0) // "Compounding Data"
+  
+  updatedAt     DateTime @updatedAt
+}
+
+model BoardMeeting {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  date          DateTime @default(now())
+  weekNumber    Int
+  
+  status        String   @default("completed")
+  
+  sentiment     String   @default("neutral") // 'optimistic', 'concerned', 'neutral'
+  blockers      String?  // JSON: ["Hiring", "AWS Credits"]
+  goalsMet      Boolean  @default(false)
+  nextGoals     String?  // JSON: ["Ship v1.2", "Hire CTO"]
+  
+  aiFeedback    String?   // "Focus on retention, your churn is up."
+  
+  createdAt     DateTime @default(now())
+}
+
+model ExitStrategy {
+  id            String   @id @default(cuid())
+  projectId     String   @unique
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  acquisitionScore Int @default(0) // 0-100
+  likelyBuyerType  String // "Big Tech", "PE Firm", "Competitor"
+  readinessGaps    String // JSON: ["IP Assignment", "Clean Cap Table"]
+  
+  updatedAt     DateTime @updatedAt
+}
+
+model AgentTask {
+  id          String   @id @default(cuid())
+  agentRole   String   // 'CEO', 'CTO', 'ProductManager', 'UXDesigner', 'Developer', 'QA', 'Growth'
+  action      String   // 'analyze_market', 'generate_schema', 'write_code'
+  status      String   @default("pending")   // 'pending', 'processing', 'completed', 'failed', 'waiting_human'
+  
+  input       String?  // JSON context provided to agent
+  output      String?  // JSON result from agent
+  error       String?
+  
+  projectId   String
+  project     StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model GeneratedAsset {
+  id          String   @id @default(cuid())
+  type        String   // 'code', 'document', 'design', 'image', 'diagram'
+  title       String
+  content     String   // The actual content (text/code) or a URL/Path
+  format      String?  // 'markdown', 'typescript', 'svg', 'json'
+  
+  version     Int      @default(1)
+  isApproved  Boolean  @default(false)
+  
+  projectId   String
+  project     StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id])
+  plan               String   @default("free") // 'free' | 'starter' | 'professional' | 'enterprise'
+  status             String   @default("active") // 'active' | 'canceled' | 'past_due' | 'trialing'
+  stripeSubscriptionId String? @unique
+  stripePriceId      String?
+  trialEnd           DateTime?
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime @default(now())
+  cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model SavedTalent {
+  id            String    @id @default(cuid())
+  userId        String    // The user who is saving
+  talentId      String    // The talent being saved
+  
+  user          User      @relation("SavedByUser", fields: [userId], references: [id])
+  talent        User      @relation("UserSavedTalent", fields: [talentId], references: [id])
+
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, talentId])
+}
+
+model Post {
+  id            String    @id @default(cuid())
+  title         String?
+  content       String
+  type          String    // 'OPPORTUNITY' | 'ACHIEVEMENT' | 'INSIGHT' | 'UPDATE' | 'QUESTION'
+  media         String?   // JSON string for media array
+  hashtags      String?   // JSON string for array
+  viewsCount    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  likes         Like[]
+  comments      Comment[]
+  savedBy       SavedPost[]
+}
+
+model Comment {
+  id            String    @id @default(cuid())
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  postId        String
+  post          Post      @relation(fields: [postId], references: [id])
+}
+
+model Like {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  
+  userId        String
+  postId        String
+  post          Post      @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model SavedPost {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  
+  userId        String
+  postId        String
+  post          Post      @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+}
+
+model Startup {
+  id            String    @id @default(cuid())
+  name          String
+  mission       String?
+  description   String?
+  logo          String?
+  website       String?
+  stage         String?
+  location      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  founderId     String
+  founder       User      @relation(fields: [founderId], references: [id])
+  opportunities Opportunity[]
+}
+
+
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // 'mention' | 'like' | 'comment' | 'follow' | 'message' | 'system'
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  
+  // Optional relations and metadata
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  // Store extra data like postId, startupId etc as JSON or optional fields
+  metadata  String?  // JSON string: { postId: '...', actorId: '...' }
+
+  createdAt DateTime @default(now())
+}
+
+model Community {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  image       String?  // URL or gradient class
+  category    String
+  tags        String?  // JSON string
+  isPrivate   Boolean  @default(false)
+  
+  ownerId     String
+  owner       User     @relation("OwnedCommunities", fields: [ownerId], references: [id])
+  
+  members     CommunityMember[]
+  posts       CommunityPost[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CommunityMember {
+  id          String    @id @default(cuid())
+  role        String    @default("member") // 'owner' | 'admin' | 'member'
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id])
+
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, communityId])
+}
+
+model CommunityPost {
+  id          String    @id @default(cuid())
+  content     String
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id])
+
+  createdAt   DateTime  @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  event       String
+  userId      String?
+  properties  String?  // JSON string
+  timestamp   DateTime @default(now())
+  
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model Opportunity {
+  id          String   @id @default(cuid())
+  type        String   // 'equity' | 'freelance' | 'job'
+  role        String
+  description String
+  compensation String?
+  skills      String?
+  status      String   @default("open")
+  
+  startupId   String?
+  startup     Startup? @relation(fields: [startupId], references: [id])
+  
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Conversation {
+  id           String       @id @default(cuid())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+  
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  createdAt      DateTime     @default(now())
+  read           Boolean      @default(false)
+  type           String       @default("text") // 'text' | 'image' | 'file'
+
+  @@map("messages")
+}
+
+model FounderReputation {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  
+  // Cross-Startup Signals
+  executionConsistency Float   @default(0) // 0-100
+  learningVelocity     Float   @default(0) // Pivots/Time
+  integrityScore       Float   @default(0) // Decision Follow-through
+  teamTrustRating      Float   @default(0) // 360 Feedback
+  
+  totalExits           Int     @default(0)
+  totalFundingRaised   Float   @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MarketingStrategy {
+  id            String   @id @default(cuid())
+  projectId     String   @unique
+  project       StartupProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  // Channel Fit Scores (0-100)
+  seoScore      Int      @default(0)
+  adsScore      Int      @default(0)
+  outboundScore Int      @default(0)
+  communityScore Int     @default(0)
+  
+  icpClarity    Int      @default(0) // How well defined is the customer?
+  messagingScore Int     @default(0) // How clear is the value prop?
+  
+  primaryChannel String? // 'seo', 'ads', 'sales', 'community'
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

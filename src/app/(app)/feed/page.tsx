@@ -1,7 +1,9 @@
 'use client';
 
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Plus, TrendingUp, Users, Hash, Sparkles, Filter } from 'lucide-react';
+import { Plus, TrendingUp, Users, Hash, Sparkles, Filter, RefreshCw, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +13,8 @@ import { PostCard } from '@/components/feed/post-card';
 import { CreatePostModal } from '@/components/feed/create-post-modal';
 import { postService, type Post } from '@/services/post.service';
 import { cn } from '@/lib/utils';
+import { useRealtime, useRealtimeFeed } from '@/hooks/useRealtime';
+import { RealtimeStatus, RealtimeUpdateBadge } from '@/components/realtime/realtime-status';
 
 // Mock trending data
 const TRENDING_TOPICS = [
@@ -22,9 +26,9 @@ const TRENDING_TOPICS = [
 ];
 
 const SUGGESTED_USERS = [
-    { id: '1', name: 'Sarah Chen', title: 'Product Designer', avatar: '', mutual: 12 },
-    { id: '2', name: 'Alex Kumar', title: 'Full Stack Dev', avatar: '', mutual: 8 },
-    { id: '3', name: 'Emma Wilson', title: 'Marketing Lead', avatar: '', mutual: 15 },
+    { id: '1', name: 'Sarah Chen', title: 'Product Designer', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SarahChen&backgroundColor=b6e3f4', mutual: 12 },
+    { id: '2', name: 'Alex Kumar', title: 'Full Stack Dev', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=AlexKumar&backgroundColor=c0aede', mutual: 8 },
+    { id: '3', name: 'Emma Wilson', title: 'Marketing Lead', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=EmmaWilson&backgroundColor=ffdfbf', mutual: 15 },
 ];
 
 export default function FeedPage() {
@@ -33,24 +37,41 @@ export default function FeedPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'trending'>('all');
 
+    // Real-time feed updates
+    const { send } = useRealtime();
+    const feedType = activeFilter === 'all' ? 'global' : activeFilter === 'following' ? 'following' : 'trending';
+    const { posts: realtimePosts, newPostsCount, clearNewPostsCount, isConnected } = useRealtimeFeed(feedType);
+
     useEffect(() => {
         loadFeed();
     }, [activeFilter]);
 
+    // Merge real-time posts with existing posts
+    useEffect(() => {
+        if (realtimePosts.length > 0) {
+            setPosts(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const newPosts = realtimePosts.filter(p => !existingIds.has(p.id));
+                return [...newPosts, ...prev];
+            });
+        }
+    }, [realtimePosts]);
+
     const loadFeed = async () => {
         try {
             setLoading(true);
-            // In production, this would call the actual API
-            // const response = await postService.getFeed({ filter: activeFilter });
-            // setPosts(response.data);
-
-            // Mock data for now
-            setPosts(generateMockPosts());
+            const response = await postService.getFeed({ filter: activeFilter });
+            setPosts(response.data.posts);
         } catch (error) {
             console.error('Failed to load feed:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleRefreshFeed = () => {
+        clearNewPostsCount();
+        loadFeed();
     };
 
     const handleLike = async (postId: string) => {
@@ -69,7 +90,8 @@ export default function FeedPage() {
 
     const handleComment = async (postId: string, content: string) => {
         try {
-            await postService.comment(postId, content);
+            const response = await postService.comment(postId, content);
+            send('post_commented', { postId, comment: response.data });
             // Update local state
             setPosts(posts.map(p =>
                 p.id === postId
@@ -97,7 +119,8 @@ export default function FeedPage() {
 
     const handleCreatePost = async (postData: any) => {
         try {
-            await postService.create(postData);
+            const response = await postService.create(postData);
+            send('new_post', response.data);
             setIsCreateModalOpen(false);
             loadFeed(); // Reload feed
         } catch (error) {
@@ -113,28 +136,54 @@ export default function FeedPage() {
                     <div className="lg:col-span-8 space-y-6">
                         {/* Header */}
                         <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold text-gradient-primary">Social Feed</h1>
-                                <p className="text-muted-foreground mt-1">
-                                    Connect, share, and grow with the community
-                                </p>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-3">
+                                    <h1 className="text-3xl font-bold text-gradient-primary">Social Feed</h1>
+                                    <RealtimeUpdateBadge
+                                        count={newPostsCount}
+                                        onClick={handleRefreshFeed}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <p className="text-muted-foreground">
+                                        Connect, share, and grow with the community
+                                    </p>
+                                    {isConnected && (
+                                        <Badge variant="success" className="text-xs">
+                                            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse mr-1.5" />
+                                            Live
+                                        </Badge>
+                                    )}
+                                </div>
                             </div>
-                            <Button
-                                variant="gradient"
-                                size="lg"
-                                className="gap-2 shadow-lg hover-lift"
-                                onClick={() => setIsCreateModalOpen(true)}
-                            >
-                                <Plus className="h-5 w-5" />
-                                Create Post
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="gap-2"
+                                    onClick={handleRefreshFeed}
+                                    disabled={loading}
+                                >
+                                    <RefreshCw className={cn("h-5 w-5", loading && "animate-spin")} />
+                                    Refresh
+                                </Button>
+                                <Button
+                                    variant="gradient"
+                                    size="lg"
+                                    className="gap-2 shadow-lg hover-lift"
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                >
+                                    <Plus className="h-5 w-5" />
+                                    Create Post
+                                </Button>
+                            </div>
                         </div>
 
                         {/* Filters */}
                         <Card glass>
                             <CardContent className="p-4">
                                 <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as any)}>
-                                    <TabsList className="grid w-full grid-cols-3">
+                                    <TabsList className="grid w-full grid-cols-4">
                                         <TabsTrigger value="all" className="gap-2">
                                             <Sparkles className="h-4 w-4" />
                                             All Posts
@@ -146,6 +195,12 @@ export default function FeedPage() {
                                         <TabsTrigger value="trending" className="gap-2">
                                             <TrendingUp className="h-4 w-4" />
                                             Trending
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="launches"
+                                            className="gap-2 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 data-[state=active]:from-indigo-500 data-[state=active]:to-purple-500 data-[state=active]:text-white"
+                                        >
+                                            <Rocket className="h-4 w-4" /> Launches
                                         </TabsTrigger>
                                     </TabsList>
                                 </Tabs>
@@ -338,7 +393,7 @@ function generateMockPosts(): Post[] {
                 id: '1',
                 name: 'Sarah Johnson',
                 title: 'CEO @ GreenTech',
-                avatar: '',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=b6e3f4',
             },
             likesCount: 45,
             commentsCount: 12,
@@ -355,13 +410,14 @@ function generateMockPosts(): Post[] {
             content: 'Excited to announce that we\'ve successfully raised $2M in seed funding! Thank you to all our investors and supporters. This is just the beginning of our journey to revolutionize the fintech space.',
             hashtags: ['Funding', 'Startup', 'Fintech', 'Milestone'],
             media: [
-                { type: 'IMAGE', url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800' },
+                { type: 'IMAGE', url: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&auto=format&fit=crop&q=60' },
+                { type: 'IMAGE', url: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&auto=format&fit=crop&q=60' },
             ],
             user: {
                 id: '2',
                 name: 'Michael Chen',
                 title: 'Founder @ PayFlow',
-                avatar: '',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael&backgroundColor=c0aede',
             },
             likesCount: 189,
             commentsCount: 34,
@@ -381,7 +437,7 @@ function generateMockPosts(): Post[] {
                 id: '3',
                 name: 'Emma Rodriguez',
                 title: 'Serial Entrepreneur',
-                avatar: '',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma&backgroundColor=ffdfbf',
             },
             likesCount: 234,
             commentsCount: 67,
@@ -391,5 +447,48 @@ function generateMockPosts(): Post[] {
             isSaved: true,
             createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
         },
+        {
+            id: '4',
+            type: 'UPDATE',
+            title: 'Launched v2.0 Today! 🚀',
+            content: 'It has been a long journey, but we finally shipped the new version of our analytics dashboard. Check it out and let us know what you think!',
+            hashtags: ['ProductLaunch', 'SaaS', 'Analytics', 'ShipIt'],
+            media: [
+                { type: 'IMAGE', url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&auto=format&fit=crop&q=60' }
+            ],
+            user: {
+                id: '4',
+                name: 'David Kim',
+                title: 'Product Manager @ DataWiz',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=David&backgroundColor=d1d4f9',
+            },
+            likesCount: 89,
+            commentsCount: 15,
+            sharesCount: 12,
+            viewsCount: 890,
+            isLiked: false,
+            isSaved: false,
+            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+            id: '5',
+            type: 'QUESTION',
+            title: 'Best tech stack for 2024?',
+            content: 'I am starting a new project and debating between Next.js and Remix. What are your thoughts? Performance and DX are my top priorities.',
+            hashtags: ['WebDev', 'Nextjs', 'Remix', 'TechStack'],
+            user: {
+                id: '5',
+                name: 'Alex Foster',
+                title: 'Senior Frontend Dev',
+                avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=ffd5dc',
+            },
+            likesCount: 56,
+            commentsCount: 42,
+            sharesCount: 5,
+            viewsCount: 450,
+            isLiked: false,
+            isSaved: false,
+            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        }
     ];
 }

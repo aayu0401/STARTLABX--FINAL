@@ -1,255 +1,339 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Sparkles, TrendingUp, Users, FileText, Clock, Target,
-  Zap, Crown, ArrowRight, Plus, Bell, MessageSquare
-} from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ArrowUpRight, ArrowDownRight, Users, Eye, Activity, Zap, TrendingUp, Calendar, Rocket } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import Link from 'next/link';
-import { useSubscription } from '@/components/subscription/feature-gate';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { dashboardService, type DashboardData } from '@/services/dashboard.service';
+import { DashboardSkeleton } from '@/components/skeletons/dashboard-skeleton';
+import { useQuery } from '@tanstack/react-query';
+import { SystemActivity } from '@/components/dashboard/system-activity';
+import { TractionScore } from '@/components/dashboard/traction-score';
+import { FounderDnaCard } from '@/components/dashboard/founder-dna';
+import { InvestorDealFlow } from '@/components/dashboard/investor-deal-flow';
+import { ConsequenceWidget } from '@/components/dashboard/consequence-widget';
+import { EquitySplitWidget } from '@/components/dashboard/equity-split-widget';
+import { StartupGraphWidget } from '@/components/dashboard/startup-graph-widget';
+import { BoardMeetingWidget } from '@/components/dashboard/board-meeting-widget';
+import { ExitStrategyWidget } from '@/components/dashboard/exit-strategy-widget';
+import { FounderRhythmWidget } from '@/components/dashboard/rhythm/founder-rhythm-widget';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function DashboardPage() {
-  const { subscription, isPremium } = useSubscription();
-  const [stats, setStats] = useState({
-    aiCreditsUsed: 12,
-    aiCreditsLimit: 50,
-    pitchDecks: 2,
-    mvpPlans: 1,
-    contracts: 3,
-    teamMembers: 2,
-    connections: 145
+  const { userProfile } = useAuth();
+  const { data: dashboardData, isLoading, refetch } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      const response = await dashboardService.getDashboard();
+      return response.data;
+    }
   });
 
-  const quickActions = [
-    { icon: Sparkles, label: 'Validate Idea', href: '/ai-builder?tab=validate', color: 'from-blue-500 to-purple-500' },
-    { icon: FileText, label: 'Create Pitch', href: '/ai-builder?tab=pitch', color: 'from-purple-500 to-pink-500' },
-    { icon: Target, label: 'Plan MVP', href: '/ai-builder?tab=mvp', color: 'from-pink-500 to-red-500' },
-    { icon: Users, label: 'Find Talent', href: '/ai-builder?tab=hire', color: 'from-red-500 to-orange-500' }
-  ];
+  if (isLoading) return <DashboardSkeleton />;
+  if (!dashboardData) return (
+    <div className="flex flex-col items-center justify-center p-12 text-center h-[60vh]">
+      <h2 className="text-xl font-semibold mb-2">Failed to load dashboard</h2>
+      <Button onClick={() => refetch()}>Retry</Button>
+    </div>
+  );
 
-  const recentActivity = [
-    { type: 'pitch', title: 'Pitch deck "TechStartup 2024" created', time: '2 hours ago', icon: FileText },
-    { type: 'hire', title: 'New proposal from John Doe', time: '5 hours ago', icon: Users },
-    { type: 'ai', title: 'Idea validation completed', time: '1 day ago', icon: Sparkles },
-    { type: 'contract', title: 'NDA signed with Sarah', time: '2 days ago', icon: FileText }
-  ];
+  const { stats, engagementData, topPosts } = dashboardData;
+  const isFounder = userProfile?.accountType === 'startup';
+  const roleTitle = isFounder ? 'Founder Dashboard' : 'Professional Dashboard';
 
-  const upcomingTasks = [
-    { title: 'Review hiring proposals', priority: 'high', dueDate: 'Today' },
-    { title: 'Complete MVP feature list', priority: 'medium', dueDate: 'Tomorrow' },
-    { title: 'Schedule investor meeting', priority: 'high', dueDate: 'This week' }
+  // Prepare chart data
+  const chartData = engagementData.map(d => ({
+    name: d.date,
+    views: d.views,
+    interactions: d.likes + d.comments + d.shares
+  }));
+
+  const statsConfig = [
+    {
+      title: isFounder ? 'Startup Views' : 'Profile Views',
+      value: stats.totalViews.toLocaleString(),
+      change: `+${stats.viewsChange}%`,
+      icon: Eye,
+      trend: stats.viewsChange >= 0 ? 'up' : 'down' as 'up' | 'down',
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10'
+    },
+    {
+      title: isFounder ? 'Potential Investors' : 'Recruiter Views',
+      value: stats.newFollowers.toLocaleString(),
+      change: `+${stats.followersChange}%`,
+      icon: Users,
+      trend: stats.followersChange >= 0 ? 'up' : 'down' as 'up' | 'down',
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10'
+    },
+    {
+      title: 'Engagement Rate',
+      value: `${stats.engagementRate}%`,
+      change: stats.engagementChange >= 0 ? `+${stats.engagementChange}%` : `${stats.engagementChange}%`,
+      icon: Activity,
+      trend: stats.engagementChange >= 0 ? 'up' : 'down' as 'up' | 'down',
+      color: 'text-orange-500',
+      bg: 'bg-orange-500/10'
+    },
+    {
+      title: 'Interactions',
+      value: stats.totalInteractions.toLocaleString(),
+      change: `+${stats.interactionsChange}%`,
+      icon: TrendingUp,
+      trend: stats.interactionsChange >= 0 ? 'up' : 'down' as 'up' | 'down',
+      color: 'text-green-500',
+      bg: 'bg-green-500/10'
+    },
   ];
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Welcome back! 👋
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Here's what's happening with your startup today
-        </p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <Card className="p-4 hover-lift">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">AI Credits</span>
-            <Zap className="w-5 h-5 text-primary" />
-          </div>
-          <div className="text-2xl font-bold mb-1">
-            {stats.aiCreditsUsed}/{stats.aiCreditsLimit}
-          </div>
-          <Progress value={(stats.aiCreditsUsed / stats.aiCreditsLimit) * 100} className="h-2" />
-        </Card>
-
-        <Card className="p-4 hover-lift">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Pitch Decks</span>
-            <FileText className="w-5 h-5 text-purple-500" />
-          </div>
-          <div className="text-2xl font-bold">{stats.pitchDecks}</div>
-          <p className="text-xs text-gray-500">Created this month</p>
-        </Card>
-
-        <Card className="p-4 hover-lift">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">MVP Plans</span>
-            <Target className="w-5 h-5 text-green-500" />
-          </div>
-          <div className="text-2xl font-bold">{stats.mvpPlans}</div>
-          <p className="text-xs text-gray-500">In progress</p>
-        </Card>
-
-        <Card className="p-4 hover-lift">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-600">Connections</span>
-            <Users className="w-5 h-5 text-blue-500" />
-          </div>
-          <div className="text-2xl font-bold">{stats.connections}</div>
-          <p className="text-xs text-gray-500 flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" />
-            +12 this week
-          </p>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Quick Actions */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((action, index) => (
-                <Link key={index} href={action.href}>
-                  <button className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary transition-all group">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                      <action.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-sm font-medium">{action.label}</span>
-                  </button>
-                </Link>
-              ))}
+      <div className="flex items-center justify-between animate-in fade-in slide-in-from-top duration-700">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-black tracking-tighter text-gradient-primary">{roleTitle}</h1>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+              <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Protocol Active</span>
             </div>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Recent Activity</h3>
-              <Link href="/activity">
-                <Button variant="ghost" size="sm">
-                  View All
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <activity.icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Upcoming Tasks */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Upcoming Tasks</h3>
-              <Button variant="ghost" size="sm">
-                <Plus className="w-4 h-4 mr-1" />
-                Add Task
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {upcomingTasks.map((task, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <input type="checkbox" className="rounded" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{task.title}</p>
-                    <p className="text-xs text-gray-500">{task.dueDate}</p>
-                  </div>
-                  <Badge variant={task.priority === 'high' ? 'default' : 'glass'}>
-                    {task.priority}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </Card>
+          </div>
+          <p className="text-muted-foreground mt-1 font-medium italic">Welcome back, {userProfile?.name?.split(' ')[0] || 'Commander'}. Initializing daily overview...</p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="hidden md:flex gap-2" onClick={() => refetch()}>
+            <Calendar className="h-4 w-4" />
+            Sync Now
+          </Button>
+          <Button variant="gradient" size="sm" className="gap-2" onClick={() => window.location.href = isFounder ? '/incubator' : '/profile'}>
+            <Zap className="h-4 w-4" />
+            {isFounder ? 'Launch New Project' : 'Update Portfolio'}
+          </Button>
+        </div>
+      </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Subscription Status */}
-          <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10">
-            <div className="flex items-center gap-2 mb-3">
-              <Crown className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold">
-                {subscription?.planId || 'Free'} Plan
+      {/* V3 ENGINE: Traction Score & Milestones */}
+      {isFounder && dashboardData.traction && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom duration-500">
+          {/* Traction Score take 1/3 width */}
+          <div className="col-span-1">
+            <TractionScore metrics={dashboardData.traction} />
+          </div>
+
+          {/* Placeholder for Roadmap/Milestones (2/3 width) - coming next */}
+          <div className="col-span-1 md:col-span-2 bg-gradient-to-br from-card to-background border border-muted/40 rounded-xl p-6 relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <Rocket className="h-4 w-4 text-purple-500" />
+                Startup Roadmap
               </h3>
+              <Button variant="ghost" size="sm" className="text-xs uppercase font-bold tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">View All</Button>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              {isPremium()
-                ? 'You have access to all premium features'
-                : 'Upgrade to unlock unlimited features'}
-            </p>
-            <Link href={isPremium() ? '/subscription' : '/pricing'}>
-              <Button variant="outline" className="w-full">
-                {isPremium() ? 'Manage Plan' : 'Upgrade Now'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </Card>
 
-          {/* AI Suggestions */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <h3 className="font-semibold">AI Suggestions</h3>
+            <div className="space-y-4">
+              {dashboardData.milestones?.map((m, i) => (
+                <div key={m.id} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/30 border border-transparent hover:border-primary/20 transition-colors">
+                  <div className={cn("w-2 h-2 rounded-full", m.status === 'completed' ? 'bg-green-500' : m.status === 'in_progress' ? 'bg-yellow-500 animate-pulse' : 'bg-muted')} />
+                  <div className="flex-1">
+                    <h4 className={cn("text-sm font-semibold", m.status === 'completed' && 'line-through text-muted-foreground')}>{m.title}</h4>
+                    {m.dueDate && <span className="text-[10px] text-muted-foreground font-mono">Due: {m.dueDate}</span>}
+                  </div>
+                  {m.status === 'pending' && <Button size="sm" variant="outline" className="h-7 text-xs">Start</Button>}
+                </div>
+              ))}
             </div>
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <p className="text-sm font-medium mb-1">Complete your pitch deck</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Add financial projections to strengthen your pitch
-                </p>
-              </div>
-              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <p className="text-sm font-medium mb-1">Expand your network</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Connect with 5 professionals in your industry
-                </p>
-              </div>
-            </div>
-          </Card>
+          </div>
+        </div>
+      )}
 
-          {/* Notifications */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">Notifications</h3>
-              </div>
-              <Badge variant="default">3</Badge>
+      {/* V5 INTEGRATION: Founder Operating Rhythm */}
+      {isFounder && dashboardData.founderRhythm && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom duration-700 delay-100 mb-6">
+          <div className="col-span-1">
+            <FounderRhythmWidget data={dashboardData.founderRhythm} />
+          </div>
+          <div className="col-span-1">
+            {/* Motivational Quote / Focus Card */}
+            <div className="h-full bg-gradient-to-br from-background to-muted/20 border-border/40 border rounded-lg flex flex-col items-center justify-center p-6 text-center">
+              <blockquote className="italic text-lg text-muted-foreground font-light font-serif mb-4">
+                "Amateurs sit and wait for inspiration, the rest of us just get up and go to work."
+              </blockquote>
+              <cite className="text-sm font-bold text-primary">— Stephen King</cite>
             </div>
-            <div className="space-y-2">
-              <div className="text-sm p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer">
-                <p className="font-medium">New message from Sarah</p>
-                <p className="text-xs text-gray-500">5 min ago</p>
-              </div>
-              <div className="text-sm p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer">
-                <p className="font-medium">Proposal accepted</p>
-                <p className="text-xs text-gray-500">1 hour ago</p>
-              </div>
-              <div className="text-sm p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer">
-                <p className="font-medium">Contract ready to sign</p>
-                <p className="text-xs text-gray-500">3 hours ago</p>
-              </div>
+          </div>
+        </div>
+      )}
+
+      {/* V3 INTEGRATION: Founder OS Grid (4 Pillars) */}
+      {isFounder && dashboardData.founderDNA && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-bottom duration-700 delay-100 mb-6">
+          <div className="col-span-1">
+            <FounderDnaCard />
+          </div>
+          <div className="col-span-1">
+            <ConsequenceWidget data={dashboardData} />
+          </div>
+          <div className="col-span-1">
+            {dashboardData.equityMap && <EquitySplitWidget data={dashboardData.equityMap} />}
+          </div>
+          <div className="col-span-1">
+            <StartupGraphWidget pivots={dashboardData.pivots} moat={dashboardData.moat} />
+          </div>
+        </div>
+      )}
+
+      {/* V3 INTEGRATION: Lifecycle Management */}
+      {isFounder && dashboardData.boardMeetings && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-bottom duration-700 delay-200 mb-6">
+          <div className="col-span-1">
+            <BoardMeetingWidget meetings={dashboardData.boardMeetings} />
+          </div>
+          <div className="col-span-1">
+            <ExitStrategyWidget strategy={dashboardData.exitStrategy} />
+          </div>
+        </div>
+      )}
+
+      {/* V3 INTEGRATION: Investor / Talent View */}
+      {
+        !isFounder && dashboardData.investorDeals && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom duration-500 mb-6">
+            <div className="col-span-1 md:col-span-2">
+              <InvestorDealFlow deals={dashboardData.investorDeals} />
             </div>
-            <Link href="/notifications">
-              <Button variant="ghost" size="sm" className="w-full mt-3">
-                View All
-              </Button>
-            </Link>
+            <div className="col-span-1">
+              {/* Placeholder for "My Portfolio" or "Upcoming Interviews" */}
+              <Card className="h-full border-muted/40 p-6 flex flex-col justify-center items-center text-center bg-gradient-to-br from-background to-primary/5">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+                  <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Portfolio Performance</h3>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Your angel investments are up <strong>12.4%</strong> this quarter.
+                  2 startups are raising follow-on rounds.
+                </p>
+                <Button variant="outline" className="w-full">View Portfolio</Button>
+              </Card>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statsConfig.map((stat, i) => (
+          <Card
+            key={i}
+            hover
+            glass
+            className="border-muted/40 animate-slide-up opacity-0 [animation-fill-mode:forwards]"
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                <h3 className="text-2xl font-bold mt-1">{stat.value}</h3>
+                <div className={`flex items-center gap-1 mt-1 text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-red-500'}`}>
+                  {stat.trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                  <span>{stat.change}</span>
+                  <span className="text-muted-foreground ml-1">vs last period</span>
+                </div>
+              </div>
+              <div className={`p-3 rounded-xl ${stat.bg}`}>
+                <stat.icon className={`h-6 w-6 ${stat.color}`} />
+              </div>
+            </CardContent>
           </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+        {/* Main Chart */}
+        <Card className="lg:col-span-4 border-muted/40 shadow-sm">
+          <CardHeader>
+            <CardTitle>Performance Overview</CardTitle>
+            <CardDescription>
+              Your content performance over the latest tracked period.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pl-0">
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorInteractions" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                />
+                <Area type="monotone" dataKey="views" stroke="#8884d8" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
+                <Area type="monotone" dataKey="interactions" stroke="#82ca9d" strokeWidth={2} fillOpacity={1} fill="url(#colorInteractions)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Activity Feed / System Activity */}
+        <div className="lg:col-span-3">
+          <SystemActivity />
         </div>
       </div>
-    </div>
+
+      {/* Quick Access / Footer */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-indigo-500/20 text-indigo-500">
+              <Zap className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-indigo-900 dark:text-indigo-100">AI Creator Studio</h4>
+              <p className="text-xs text-indigo-700/80 dark:text-indigo-300/80">Draft content with AI assistance.</p>
+            </div>
+            <Button variant="ghost" size="sm" className="ml-auto">Open</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-emerald-500/20 text-emerald-500">
+              <Rocket className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-emerald-900 dark:text-emerald-100">Find Co-Founders</h4>
+              <p className="text-xs text-emerald-700/80 dark:text-emerald-300/80">68 new matches this week.</p>
+            </div>
+            <Button variant="ghost" size="sm" className="ml-auto">View</Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+          <CardContent className="p-6 flex items-center gap-4">
+            <div className="p-3 rounded-full bg-amber-500/20 text-amber-500">
+              <Users className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-amber-900 dark:text-amber-100">Mentorships</h4>
+              <p className="text-xs text-amber-700/80 dark:text-amber-300/80">Connect with industry leaders.</p>
+            </div>
+            <Button variant="ghost" size="sm" className="ml-auto">Browse</Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div >
   );
 }

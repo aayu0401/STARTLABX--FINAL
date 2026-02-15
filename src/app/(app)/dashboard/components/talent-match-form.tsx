@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { suggestTalent } from '@/ai/flows/talent-suggestions';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -64,7 +64,7 @@ export function TalentMatchForm() {
       const result = await suggestTalent(values);
       if (result?.talentSuggestions) {
         setSuggestions(result.talentSuggestions);
-        
+
         // Track successful AI match
         await analyticsService.track('ai_match_completed', {
           suggestions_count: result.talentSuggestions.length,
@@ -85,7 +85,7 @@ export function TalentMatchForm() {
       }
     } catch (error) {
       console.error('Error fetching talent suggestions:', error);
-      
+
       await analyticsService.trackError('ai_suggestion_error', String(error), 'talent_match_form');
 
       toast({
@@ -165,8 +165,8 @@ export function TalentMatchForm() {
               )}
             />
           </div>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
             className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
@@ -184,38 +184,38 @@ export function TalentMatchForm() {
           </Button>
         </form>
       </Form>
-      
+
       {suggestions.length > 0 && (
         <div className="mt-12">
-            <h3 className="text-2xl font-bold tracking-tight mb-6">Talent Suggestions</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {suggestions.map((suggestion, index) => {
-                    const [name, ...descriptionParts] = suggestion.split(':');
-                    const description = descriptionParts.join(':').trim();
-                    return (
-                        <Card key={index} className="flex flex-col">
-                            <CardHeader className="flex flex-row items-center gap-4">
-                               <Avatar className="h-12 w-12">
-                                    <AvatarImage src={`https://placehold.co/100x100?text=${name.charAt(0)}`} data-ai-hint="person face" />
-                                    <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle>{name}</CardTitle>
-                                    <CardDescription>Potential Match</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-grow space-y-4">
-                                <p className="text-muted-foreground">{description}</p>
-                                <div className="flex flex-wrap gap-2">
-                                    <Badge variant="secondary">React</Badge>
-                                    <Badge variant="secondary">UX Design</Badge>
-                                    <Badge variant="secondary">Marketing</Badge>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
+          <h3 className="text-2xl font-bold tracking-tight mb-6">Talent Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {suggestions.map((suggestion, index) => {
+              const [name, ...descriptionParts] = suggestion.split(':');
+              const description = descriptionParts.join(':').trim();
+              return (
+                <Card key={index} className="flex flex-col">
+                  <CardHeader className="flex flex-row items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={`https://placehold.co/100x100?text=${name.charAt(0)}`} data-ai-hint="person face" />
+                      <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle>{name}</CardTitle>
+                      <CardDescription>Potential Match</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-4">
+                    <p className="text-muted-foreground">{description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">React</Badge>
+                      <Badge variant="secondary">UX Design</Badge>
+                      <Badge variant="secondary">Marketing</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
     </>

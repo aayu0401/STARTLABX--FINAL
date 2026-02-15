@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 import type { LiveFeedItem } from './types';
 
 const liveFeed: LiveFeedItem[] = [
@@ -46,7 +46,7 @@ const liveFeed: LiveFeedItem[] = [
 
 export function LiveFeed() {
   const handleViewAllActivity = async () => {
-    await analyticsService.trackButtonClick('view_all_activity', 'dashboard');
+    await analyticsService.trackButtonClick('view_all_activity', { context: 'dashboard' });
   };
 
   return (

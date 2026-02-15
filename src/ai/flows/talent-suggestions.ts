@@ -8,8 +8,8 @@
  * - SuggestTalentOutput - The return type for the suggestTalent function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const SuggestTalentInputSchema = z.object({
   startupDescription: z
@@ -37,8 +37,8 @@ export async function suggestTalent(input: SuggestTalentInput): Promise<SuggestT
 
 const prompt = ai.definePrompt({
   name: 'suggestTalentPrompt',
-  input: {schema: SuggestTalentInputSchema},
-  output: {schema: SuggestTalentOutputSchema},
+  input: { schema: SuggestTalentInputSchema },
+  output: { schema: SuggestTalentOutputSchema },
   prompt: `You are an AI-powered talent matcher. You will receive a startup description, required skills, and equity expectations. Based on this information, you will suggest potential talent matches from the marketplace.
 
 Startup Description: {{{startupDescription}}}
@@ -55,8 +55,8 @@ const suggestTalentFlow = ai.defineFlow(
     inputSchema: SuggestTalentInputSchema,
     outputSchema: SuggestTalentOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input: SuggestTalentInput) => {
+    const { output } = await prompt(input);
     return output!;
   }
 );

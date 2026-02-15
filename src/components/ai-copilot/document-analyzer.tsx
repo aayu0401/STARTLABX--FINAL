@@ -32,7 +32,7 @@ export function DocumentAnalyzer() {
                 analysisType: selectedType
             });
 
-            setAnalysis(response.analysis);
+            setAnalysis(response.analysis || response.summary || 'No detailed analysis provided.');
         } catch (error) {
             console.error('Failed to analyze document:', error);
             setAnalysis('Failed to analyze document. Please try again.');

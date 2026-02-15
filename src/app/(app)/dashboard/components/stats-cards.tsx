@@ -2,7 +2,7 @@
 import React from 'react';
 import { Briefcase, Lightbulb, Users, Wand2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
 
 function StatCard({
   title,
@@ -43,7 +43,7 @@ function StatCard({
 
 export function StatsCards() {
   const handleCardClick = async (cardName: string) => {
-    await analyticsService.trackButtonClick(`${cardName}_card`, 'dashboard');
+    await analyticsService.trackButtonClick(`${cardName}_card`, { context: 'dashboard' });
   };
 
   return (

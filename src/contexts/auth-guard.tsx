@@ -1,52 +1,36 @@
-"use client";
+'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from './auth-context';
 
 interface AuthGuardProps {
-  children: React.ReactNode;
-  requireAuth?: boolean;
-  redirectTo?: string;
+    children: React.ReactNode;
+    requireAuth?: boolean;
 }
 
-export function AuthGuard({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = '/login' 
-}: AuthGuardProps) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
 
-  useEffect(() => {
-    if (!loading) {
-      if (requireAuth && !user) {
-        router.push(redirectTo);
-      } else if (!requireAuth && user) {
-        router.push('/dashboard');
-      }
+    useEffect(() => {
+        if (!loading && !user && pathname !== '/login' && pathname !== '/signup') {
+            router.push('/login');
+        }
+    }, [user, loading, pathname, router]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
     }
-  }, [user, loading, requireAuth, redirectTo, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+    if (!user && pathname !== '/login' && pathname !== '/signup') {
+        return null;
+    }
 
-  if (requireAuth && !user) {
-    return null; // Will redirect in useEffect
-  }
-
-  if (!requireAuth && user) {
-    return null; // Will redirect in useEffect
-  }
-
-  return <>{children}</>;
+    return <>{children}</>;
 }

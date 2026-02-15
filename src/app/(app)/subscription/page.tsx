@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Crown, TrendingUp, AlertCircle, Settings, CreditCard } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -56,8 +58,9 @@ export default function SubscriptionPage() {
 
     const currentPlan = subscription ? subscriptionService.getPlanById(subscription.planId) : null;
 
-    const getUsagePercentage = (used: number, limit: number) => {
-        if (limit === -1) return 0; // unlimited
+    const getUsagePercentage = (used: number, limit: number | string) => {
+        if (limit === 'unlimited' || limit === -1) return 0; // unlimited
+        if (typeof limit === 'string') return 0; // Safe fallback
         return (used / limit) * 100;
     };
 

@@ -1,154 +1,140 @@
+
 import { apiClient } from '@/lib/api-client';
+
+export interface User {
+    id: string;
+    name: string;
+    avatar?: string;
+    title?: string;
+}
+
+export interface MediaItem {
+    type: 'IMAGE' | 'VIDEO' | 'FILE';
+    url: string;
+}
 
 export interface Post {
     id: string;
-    userId: string;
-    type: 'UPDATE' | 'OPPORTUNITY' | 'INSIGHT' | 'QUESTION' | 'ACHIEVEMENT';
-    title?: string;
+    user: User;
     content: string;
-    status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-    visibility: 'PUBLIC' | 'CONNECTIONS' | 'PRIVATE';
-    hashtags: string[];
-    mentions: string[];
-    media: PostMedia[];
+    title?: string;
+    type: 'UPDATE' | 'OPPORTUNITY' | 'INSIGHT' | 'QUESTION' | 'ACHIEVEMENT' | 'LAUNCH' | 'text' | 'image' | 'video' | 'poll' | 'article';
+    media?: MediaItem[];
     likesCount: number;
     commentsCount: number;
     sharesCount: number;
     viewsCount: number;
+    isLiked: boolean;
+    isSaved: boolean;
+    hashtags: string[];
+    mentions?: string[];
     createdAt: string;
-    updatedAt: string;
-    user?: {
-        id: string;
-        name: string;
-        avatar?: string;
-        title?: string;
-    };
-    isLiked?: boolean;
-    isSaved?: boolean;
+    updatedAt?: string;
+    projectUrl?: string; // New field for launch link
 }
 
-export interface PostMedia {
-    id: string;
-    type: 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'LINK';
-    url: string;
-    thumbnailUrl?: string;
-    fileName?: string;
+export interface CreatePostRequest {
+    content: string;
+    title?: string;
+    type: Post['type'];
+    media?: File[];
+    hashtags?: string[];
+    mentions?: string[];
+    visibility?: 'PUBLIC' | 'CONNECTIONS' | 'PRIVATE';
+    projectUrl?: string;
 }
 
 export interface Comment {
     id: string;
     postId: string;
-    userId: string;
+    user: User;
     content: string;
-    likesCount: number;
-    repliesCount: number;
+    likes: number;
     createdAt: string;
-    user?: {
-        id: string;
-        name: string;
-        avatar?: string;
-    };
 }
 
-export interface CreatePostRequest {
-    type: Post['type'];
-    title?: string;
-    content: string;
-    visibility?: Post['visibility'];
-    hashtags?: string[];
-    mentions?: string[];
-    scheduledAt?: string;
-}
+// MOCK LAUNCH DATA GENERATOR
+const generateMockLaunches = (): Post[] => [
+    {
+        id: 'launch-1',
+        user: { id: 'u1', name: 'Elena R.', title: 'AI Researcher', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Elena' },
+        type: 'LAUNCH',
+        title: '🚀 Introducing MediScan AI',
+        content: 'After 3 weeks of incubation in StartLabX, we are live! MediScan uses Computer Vision to detect early skin anomalies. Built with PyTorch and React Native.',
+        hashtags: ['HealthTech', 'AI', 'Launch'],
+        likesCount: 342,
+        commentsCount: 56,
+        sharesCount: 12,
+        viewsCount: 1205,
+        isLiked: false,
+        isSaved: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+        projectUrl: 'https://mediscan.ai'
+    },
+    {
+        id: 'launch-2',
+        user: { id: 'u2', name: 'Marcus Chen', title: 'Serial Founder', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus' },
+        type: 'LAUNCH',
+        title: '🚀 FinFlow - Automate your taxes',
+        content: 'Tired of spreadsheets? FinFlow connects to your bank and categorizes expenses using LLMs. Looking for beta testers!',
+        hashtags: ['FinTech', 'SaaS', 'Beta'],
+        likesCount: 89,
+        commentsCount: 23,
+        sharesCount: 5,
+        viewsCount: 450,
+        isLiked: true,
+        isSaved: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+        projectUrl: 'https://finflow.io'
+    }
+];
 
 export const postService = {
-    // Feed
-    getFeed: (params?: { page?: number; limit?: number; filter?: string }) =>
-        apiClient.get<{ posts: Post[]; total: number }>('/api/posts/feed', { params }),
+    // Get feed posts
+    getFeed: (params?: { page?: number; limit?: number; filter?: 'all' | 'following' | 'trending' | 'launches' }) => {
+        if (params?.filter === 'launches') {
+            // Return mock launches for now
+            return Promise.resolve({ data: { posts: generateMockLaunches(), total: 2 } });
+        }
+        return apiClient.get<{ posts: Post[]; total: number }>('/api/posts/feed', { params });
+    },
 
-    getTrending: (params?: { limit?: number }) =>
-        apiClient.get<{ posts: Post[] }>('/api/posts/feed/trending', { params }),
+    // Get trending posts
+    getTrending: () =>
+        apiClient.get<Post[]>('/api/posts/trending'),
 
-    getFollowing: (params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ posts: Post[] }>('/api/posts/feed/following', { params }),
+    // Create a new post
+    create: (data: CreatePostRequest) => {
+        const formData = new FormData();
+        formData.append('content', data.content);
+        if (data.title) formData.append('title', data.title);
+        formData.append('type', data.type);
+        if (data.media) {
+            data.media.forEach((file) => formData.append('media', file));
+        }
+        if (data.hashtags) formData.append('hashtags', JSON.stringify(data.hashtags));
+        if (data.mentions) formData.append('mentions', JSON.stringify(data.mentions));
+        if (data.visibility) formData.append('visibility', data.visibility);
+        if (data.projectUrl) formData.append('projectUrl', data.projectUrl);
 
-    // Posts
-    getById: (id: string) =>
-        apiClient.get<Post>(`/api/posts/${id}`),
+        return apiClient.post<Post>('/api/posts', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+    },
 
-    create: (data: CreatePostRequest) =>
-        apiClient.post<Post>('/api/posts', data),
-
-    update: (id: string, data: Partial<CreatePostRequest>) =>
-        apiClient.put<Post>(`/api/posts/${id}`, data),
-
-    delete: (id: string) =>
-        apiClient.delete(`/api/posts/${id}`),
-
-    publish: (id: string) =>
-        apiClient.post(`/api/posts/${id}/publish`),
-
-    // Engagement
+    // Like a post
     like: (postId: string) =>
         apiClient.post(`/api/posts/${postId}/like`),
 
-    unlike: (postId: string) =>
-        apiClient.delete(`/api/posts/${postId}/like`),
+    // Comment on a post
+    comment: (postId: string, content: string) =>
+        apiClient.post<Comment>(`/api/posts/${postId}/comments`, { content }),
 
+    // Share a post
     share: (postId: string) =>
         apiClient.post(`/api/posts/${postId}/share`),
 
+    // Save a post
     save: (postId: string) =>
         apiClient.post(`/api/posts/${postId}/save`),
-
-    unsave: (postId: string) =>
-        apiClient.delete(`/api/posts/${postId}/save`),
-
-    // Comments
-    getComments: (postId: string, params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ comments: Comment[]; total: number }>(`/api/posts/${postId}/comments`, { params }),
-
-    addComment: (postId: string, content: string) =>
-        apiClient.post<Comment>(`/api/posts/${postId}/comment`, { content }),
-
-    updateComment: (postId: string, commentId: string, content: string) =>
-        apiClient.put(`/api/posts/${postId}/comments/${commentId}`, { content }),
-
-    deleteComment: (postId: string, commentId: string) =>
-        apiClient.delete(`/api/posts/${postId}/comments/${commentId}`),
-
-    // User posts
-    getUserPosts: (userId: string, params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ posts: Post[] }>(`/api/posts/user/${userId}`, { params }),
-
-    getDrafts: () =>
-        apiClient.get<{ posts: Post[] }>('/api/posts/drafts'),
-
-    getSaved: () =>
-        apiClient.get<{ posts: Post[] }>('/api/posts/saved'),
-
-    // Search
-    search: (query: string, params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ posts: Post[] }>('/api/posts/search', { params: { q: query, ...params } }),
-
-    // Hashtags
-    getTrendingHashtags: () =>
-        apiClient.get<{ hashtags: Array<{ tag: string; count: number }> }>('/api/posts/hashtags/trending'),
-
-    getPostsByHashtag: (tag: string, params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ posts: Post[] }>(`/api/posts/hashtags/${tag}/posts`, { params }),
-
-    // Analytics
-    getAnalytics: (postId: string) =>
-        apiClient.get(`/api/posts/${postId}/analytics`),
-
-    // Media upload
-    uploadMedia: (file: File) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        return apiClient.post<{ url: string; thumbnailUrl?: string }>('/api/posts/media/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-    },
 };

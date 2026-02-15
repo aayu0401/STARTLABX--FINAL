@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import { Sparkles, MessageSquare, FileText, Lightbulb, History } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -10,6 +12,7 @@ import { SuggestionsList } from '@/components/ai-copilot/suggestion-card';
 import { DocumentAnalyzer } from '@/components/ai-copilot/document-analyzer';
 import aiCopilotService, { Conversation } from '@/services/ai-copilot.service';
 import { formatDate } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AICopilotPage() {
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -17,8 +20,8 @@ export default function AICopilotPage() {
     const [activeTab, setActiveTab] = useState('chat');
     const [isLoading, setIsLoading] = useState(true);
 
-    // TODO: Get user type from auth context
-    const userType: 'startup' | 'professional' = 'startup';
+    const { user } = useAuth();
+    const userType = user?.accountType || 'startup';
 
     useEffect(() => {
         loadConversations();
@@ -26,8 +29,11 @@ export default function AICopilotPage() {
 
     const loadConversations = async () => {
         try {
-            const response = await aiCopilotService.getConversations({ limit: 10 });
-            setConversations(response.conversations);
+            const data = await aiCopilotService.getConversations();
+            // Map service response to component expectations if needed, or just use data
+            // Since data is Conversation[], we set it directly.
+            // But we need to ensure the component handles the missing fields by computing them or extending the type locally.
+            setConversations(data);
         } catch (error) {
             console.error('Failed to load conversations:', error);
         } finally {
@@ -88,27 +94,33 @@ export default function AICopilotPage() {
                                     No conversations yet. Start chatting!
                                 </p>
                             ) : (
-                                conversations.map(conv => (
-                                    <button
-                                        key={conv.id}
-                                        onClick={() => {
-                                            setSelectedConversation(conv.id);
-                                            setActiveTab('chat');
-                                        }}
-                                        className={`w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${selectedConversation === conv.id ? 'bg-primary/10' : ''
-                                            }`}
-                                    >
-                                        <h4 className="font-medium text-sm mb-1 truncate">
-                                            {conv.title}
-                                        </h4>
-                                        <p className="text-xs text-gray-500 truncate">
-                                            {conv.lastMessage}
-                                        </p>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            {formatDate(new Date(conv.lastMessageAt))}
-                                        </p>
-                                    </button>
-                                ))
+                                conversations.map(conv => {
+                                    const lastMsg = conv.messages?.[conv.messages.length - 1];
+                                    const lastMessageText = lastMsg ? lastMsg.content : 'No messages yet';
+                                    const lastMessageTime = conv.updatedAt || conv.createdAt;
+
+                                    return (
+                                        <button
+                                            key={conv.id}
+                                            onClick={() => {
+                                                setSelectedConversation(conv.id);
+                                                setActiveTab('chat');
+                                            }}
+                                            className={`w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${selectedConversation === conv.id ? 'bg-primary/10' : ''
+                                                }`}
+                                        >
+                                            <h4 className="font-medium text-sm mb-1 truncate">
+                                                {conv.title}
+                                            </h4>
+                                            <p className="text-xs text-gray-500 truncate">
+                                                {lastMessageText}
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                {formatDate(new Date(lastMessageTime))}
+                                            </p>
+                                        </button>
+                                    );
+                                })
                             )}
                         </div>
                     </Card>

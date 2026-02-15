@@ -1,164 +1,243 @@
 import { apiClient } from '@/lib/api-client';
 
-export interface UserDashboard {
-    userId: string;
-    profileViews: {
-        total: number;
-        thisWeek: number;
-        thisMonth: number;
-        trend: number;
-    };
-    connections: {
-        total: number;
-        pending: number;
-        accepted: number;
-        thisWeek: number;
-    };
-    engagement: {
-        postsCreated: number;
-        commentsReceived: number;
-        likesReceived: number;
-        sharesReceived: number;
-    };
-    opportunities: {
-        applied: number;
-        shortlisted: number;
-        interviews: number;
-        offers: number;
-    };
-    updatedAt: string;
+export interface DashboardStats {
+    totalViews: number;
+    viewsChange: number;
+    engagementRate: number;
+    engagementChange: number;
+    newFollowers: number;
+    followersChange: number;
+    totalInteractions: number;
+    interactionsChange: number;
 }
 
-export interface StartupDashboard {
-    startupId: string;
-    overview: {
-        totalApplications: number;
-        activeProjects: number;
-        teamSize: number;
-        fundingProgress: number;
-    };
-    applications: {
-        total: number;
-        pending: number;
-        reviewed: number;
-        accepted: number;
-        rejected: number;
-    };
-    team: {
-        fullTime: number;
-        partTime: number;
-        freelance: number;
-        equity: number;
-    };
-    engagement: {
-        profileViews: number;
-        saves: number;
-        shares: number;
-        inquiries: number;
-    };
-    growth: {
-        weekOverWeek: number;
-        monthOverMonth: number;
-        quarterOverQuarter: number;
-    };
-    updatedAt: string;
+export interface EngagementData {
+    date: string;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
 }
 
-export interface ActivityEvent {
+export interface AudienceBreakdown {
+    profession: string;
+    percentage: number;
+    count: number;
+}
+
+export interface TopPost {
     id: string;
-    userId: string;
-    entityType: 'startup' | 'professional' | 'project' | 'post' | 'community';
-    entityId: string;
-    eventType: 'view' | 'like' | 'comment' | 'share' | 'apply' | 'save';
-    metadata: any;
-    timestamp: string;
+    content: string;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    engagement: number;
+    createdAt: string;
 }
 
-export interface Insight {
+export interface GrowthInsight {
+    metric: string;
+    current: number;
+    target: number;
+    progress: number;
+    trend: 'up' | 'down' | 'stable';
+}
+
+export interface ActivitySummary {
+    posts: number;
+    comments: number;
+    likes: number;
+    shares: number;
+    connections: number;
+    messages: number;
+}
+
+export interface RecommendedAction {
     id: string;
-    userId: string;
-    type: 'recommendation' | 'alert' | 'achievement' | 'trend';
+    type: 'post' | 'connect' | 'message' | 'join' | 'update';
     title: string;
     description: string;
-    priority: 'low' | 'medium' | 'high';
-    actionable: boolean;
-    actionUrl?: string;
-    createdAt: string;
-    readAt?: string;
+    priority: 'high' | 'medium' | 'low';
+    icon: string;
+}
+
+export interface TractionMetrics {
+    score: number; // 0-100
+    development: number;
+    market: number;
+    team: number;
+
+    // V5 Explicit Metrics
+    mrr?: number;
+    retention?: number;
+    growthRate?: number;
+}
+
+export interface RoadmapMilestone {
+    id: string;
+    title: string;
+    status: 'pending' | 'in_progress' | 'completed';
+    dueDate?: string;
+}
+
+export interface FounderDNA {
+    archetype: string;
+    attributes: { label: string; value: number; color: string; }[];
+    coFounderFit: string;
+    risk: string;
+}
+
+export interface InvestorDeal {
+    id: string;
+    startupName: string;
+    industry: string;
+    tractionScore: number;
+    matchScore: number;
+    fundingAsk: string;
+    logo?: string;
+}
+
+export interface RiskAnalysis {
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    factors: string[];
+    recommendation: string;
+}
+
+export interface EquityData {
+    totalAllocated: number; // Percentage
+    founders: { user: string; role: string; percentage: number; status: 'proposed' | 'agreed' | 'signed' }[];
+    poolRemaining: number;
+}
+
+export interface PivotHistory {
+    id: string;
+    previousStage: string;
+    newStage: string;
+    reason: string;
+    date: string;
+}
+
+export interface DefensibilityMoat {
+    score: number;
+    networkEffects: number;
+    brand: number;
+    tech: number;
+    data: number;
+}
+
+export interface BoardMeeting {
+    id: string;
+    weekNumber: number;
+    date: string;
+    status: 'completed' | 'pending';
+    sentiment: 'optimistic' | 'concerned' | 'neutral';
+    aiFeedback: string;
+}
+
+export interface ExitStrategy {
+    acquisitionScore: number;
+    buyerTypes: string[];
+    readinessGaps: string[];
+}
+
+export interface DashboardData {
+    stats: DashboardStats;
+    engagementData: EngagementData[];
+    audienceBreakdown: AudienceBreakdown[];
+    topPosts: TopPost[];
+    growthInsights: GrowthInsight[];
+    activitySummary: ActivitySummary;
+    recommendedActions: RecommendedAction[];
+    // V3 Extensions
+    traction?: TractionMetrics;
+    milestones?: RoadmapMilestone[];
+    executionVelocity?: number;
+    founderDNA?: FounderDNA;
+    investorDeals?: InvestorDeal[];
+    riskAnalysis?: RiskAnalysis;
+    equityMap?: EquityData;
+    pivots?: PivotHistory[];
+    moat?: DefensibilityMoat;
+    boardMeetings?: BoardMeeting[];
+    exitStrategy?: ExitStrategy;
+    founderRhythm?: {
+        executionStreak: number;
+        executionDebt: number;
+        todaysAction?: {
+            id: string;
+            content: string;
+            status: 'pending' | 'completed' | 'missed' | 'carried_over';
+        };
+    };
 }
 
 export const dashboardService = {
-    // User Dashboard
-    getUserDashboard: (userId: string) =>
-        apiClient.get<UserDashboard>(`/api/dashboard/user/${userId}`),
+    // Get dashboard overview
+    getDashboard: async (timeRange?: '7d' | '30d' | '90d' | '1y') => {
+        try {
+            return await apiClient.get<DashboardData>('/api/dashboard', { params: { timeRange } });
+        } catch (error) {
+            console.error("Dashboard API failed", error);
+            throw error;
+        }
+    },
+    // Get stats
+    getStats: (timeRange?: '7d' | '30d' | '90d' | '1y') =>
+        apiClient.get<DashboardStats>('/api/dashboard/stats', { params: { timeRange } }),
 
-    getUserStats: (userId: string) =>
-        apiClient.get(`/api/dashboard/user/${userId}/stats`),
+    // Get engagement data
+    getEngagementData: (timeRange?: '7d' | '30d' | '90d' | '1y') =>
+        apiClient.get<EngagementData[]>('/api/dashboard/engagement', { params: { timeRange } }),
 
-    getUserActivity: (userId: string, params?: { page?: number; limit?: number }) =>
-        apiClient.get<{ activities: ActivityEvent[] }>(`/api/dashboard/user/${userId}/activity`, { params }),
+    // Get audience breakdown
+    getAudienceBreakdown: () =>
+        apiClient.get<AudienceBreakdown[]>('/api/dashboard/audience'),
 
-    getUserInsights: (userId: string) =>
-        apiClient.get<{ insights: Insight[] }>(`/api/dashboard/user/${userId}/insights`),
+    // Get top posts
+    getTopPosts: (limit?: number) =>
+        apiClient.get<TopPost[]>('/api/dashboard/top-posts', { params: { limit } }),
 
-    // Startup Dashboard
-    getStartupDashboard: (startupId: string) =>
-        apiClient.get<StartupDashboard>(`/api/dashboard/startup/${startupId}`),
+    // Get growth insights
+    getGrowthInsights: () =>
+        apiClient.get<GrowthInsight[]>('/api/dashboard/growth'),
 
-    getStartupMetrics: (startupId: string) =>
-        apiClient.get(`/api/dashboard/startup/${startupId}/metrics`),
+    // Get activity summary
+    getActivitySummary: (timeRange?: '7d' | '30d' | '90d' | '1y') =>
+        apiClient.get<ActivitySummary>('/api/dashboard/activity', { params: { timeRange } }),
 
-    getStartupTeam: (startupId: string) =>
-        apiClient.get(`/api/dashboard/startup/${startupId}/team`),
+    // Get recommended actions
+    getRecommendedActions: () =>
+        apiClient.get<RecommendedAction[]>('/api/dashboard/recommendations'),
 
-    getStartupApplications: (startupId: string) =>
-        apiClient.get(`/api/dashboard/startup/${startupId}/applications`),
+    // Export dashboard data
+    exportData: (format: 'csv' | 'pdf', timeRange?: '7d' | '30d' | '90d' | '1y') =>
+        apiClient.get('/api/dashboard/export', {
+            params: { format, timeRange },
+            responseType: 'blob',
+        }),
 
-    getStartupGrowth: (startupId: string, params?: { period?: string }) =>
-        apiClient.get(`/api/dashboard/startup/${startupId}/growth`, { params }),
+    // V5 Logic: Traction -> Visibility -> Capital
+    calculateCapitalReadiness: (traction: TractionMetrics, moat: DefensibilityMoat): number => {
+        let score = 0;
 
-    // Professional Dashboard
-    getProfessionalDashboard: (userId: string) =>
-        apiClient.get(`/api/dashboard/professional/${userId}`),
+        const mrr = traction.mrr || 0;
+        const retention = traction.retention || 0;
+        const growthRate = traction.growthRate || 0;
 
-    getPortfolioAnalytics: (userId: string) =>
-        apiClient.get(`/api/dashboard/professional/${userId}/portfolio`),
+        // Traction Weights (60%)
+        if (mrr > 10000) score += 30;
+        else if (mrr > 5000) score += 15;
 
-    getSkillsAnalytics: (userId: string) =>
-        apiClient.get(`/api/dashboard/professional/${userId}/skills`),
+        if (retention > 80) score += 20;
+        else if (retention > 60) score += 10;
 
-    getOpportunities: (userId: string) =>
-        apiClient.get(`/api/dashboard/professional/${userId}/opportunities`),
+        if (growthRate > 20) score += 10;
 
-    // Analytics
-    getOverview: () =>
-        apiClient.get('/api/dashboard/analytics/overview'),
+        // Moat Weights (40%)
+        if (moat.score > 80) score += 40;
+        else if (moat.score > 50) score += 20;
 
-    getTrends: (params?: { period?: string }) =>
-        apiClient.get('/api/dashboard/analytics/trends', { params }),
-
-    getComparisons: (params?: { type?: string }) =>
-        apiClient.get('/api/dashboard/analytics/comparisons', { params }),
-
-    generateCustomReport: (data: any) =>
-        apiClient.post('/api/dashboard/analytics/custom', data),
-
-    // Event Tracking
-    trackEvent: (data: {
-        entityType: string;
-        entityId: string;
-        eventType: string;
-        metadata?: any;
-    }) =>
-        apiClient.post('/api/dashboard/events/track', data),
-
-    trackPageView: (data: { page: string; metadata?: any }) =>
-        apiClient.post('/api/dashboard/events/page-view', data),
-
-    trackInteraction: (data: {
-        interactionType: string;
-        targetId: string;
-        metadata?: any;
-    }) =>
-        apiClient.post('/api/dashboard/events/interaction', data),
+        return Math.min(100, score);
+    },
 };

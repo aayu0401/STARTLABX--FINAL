@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, MapPin, Navigation, Globe } from 'lucide-react';
-import { searchLocations, getCurrentLocation, reverseGeocode, popularCities, type LocationSuggestion } from '@/services/location';
-import { analyticsService } from '@/services/analytics';
+import { searchLocations, getCurrentLocation, reverseGeocode, popularCities, type LocationSuggestion } from '@/services/location.service';
+import { analyticsService } from '@/services/analytics.service';
 import { cn } from '@/lib/utils';
 
 interface LocationAutocompleteProps {
@@ -30,7 +30,7 @@ export function LocationAutocomplete({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showPopular, setShowPopular] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  
+
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
@@ -104,7 +104,7 @@ export function LocationAutocomplete({
     onChange(selectedValue);
     setShowSuggestions(false);
     setShowPopular(false);
-    
+
     // Track location selection
     analyticsService.track('location_autocomplete_used', {
       location: selectedValue,
@@ -117,7 +117,7 @@ export function LocationAutocomplete({
     setQuery(city);
     onChange(city);
     setShowPopular(false);
-    
+
     // Track popular city selection
     analyticsService.track('location_autocomplete_used', {
       location: city,
@@ -144,7 +144,7 @@ export function LocationAutocomplete({
           onChange(locationName);
           setShowSuggestions(false);
           setShowPopular(false);
-          
+
           // Track current location usage
           analyticsService.track('location_autocomplete_used', {
             location: locationName,
@@ -155,7 +155,7 @@ export function LocationAutocomplete({
       }
     } catch (error) {
       console.error('Error getting current location:', error);
-      
+
       // Track error
       const message = error instanceof Error ? error.message : String(error);
       analyticsService.trackError('location_autocomplete_error', message, 'current_location');
@@ -186,7 +186,7 @@ export function LocationAutocomplete({
             )}
           </div>
         </div>
-        
+
         <Button
           type="button"
           variant="outline"

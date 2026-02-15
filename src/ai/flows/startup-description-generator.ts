@@ -8,8 +8,8 @@
  * - StartupDescriptionOutput - The return type for the generateStartupDescription function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 const StartupDescriptionInputSchema = z.object({
   startupName: z.string().describe('The name of the startup.'),
@@ -31,8 +31,8 @@ export async function generateStartupDescription(
 
 const prompt = ai.definePrompt({
   name: 'startupDescriptionPrompt',
-  input: {schema: StartupDescriptionInputSchema},
-  output: {schema: StartupDescriptionOutputSchema},
+  input: { schema: StartupDescriptionInputSchema },
+  output: { schema: StartupDescriptionOutputSchema },
   prompt: `You are a creative copywriter specializing in crafting compelling startup descriptions.
 
   Generate a detailed and engaging description for the startup, highlighting its mission, industry, and unique value proposition.
@@ -50,8 +50,8 @@ const generateStartupDescriptionFlow = ai.defineFlow(
     inputSchema: StartupDescriptionInputSchema,
     outputSchema: StartupDescriptionOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input: StartupDescriptionInput) => {
+    const { output } = await prompt(input);
     return output!;
   }
 );

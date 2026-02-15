@@ -14,14 +14,14 @@ export function MainProfileCard({ userProfile }: { userProfile: UserProfileData 
       <CardHeader>
         <div className="flex items-start gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src="https://placehold.co/200x200" alt={userProfile.fullName} />
+            <AvatarImage src="https://placehold.co/200x200" alt={userProfile.name} />
             <AvatarFallback className="text-lg">
-              {userProfile.fullName.split(' ').map(n => n[0]).join('')}
+              {userProfile.name.split(' ').map(n => n[0]).join('')}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <CardTitle className="text-xl">{userProfile.fullName}</CardTitle>
+              <CardTitle className="text-xl">{userProfile.name}</CardTitle>
               <Badge variant={isStartup ? 'default' : 'secondary'}>
                 {isStartup ? 'Founder' : 'Professional'}
               </Badge>

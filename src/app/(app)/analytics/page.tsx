@@ -1,5 +1,7 @@
 'use client';
 
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Users, Eye, Heart, MessageCircle, Share2, Target, Calendar, Download, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

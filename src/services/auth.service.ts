@@ -5,14 +5,17 @@ export interface LoginRequest {
     password: string;
 }
 
-export interface RegisterRequest {
+export interface SignupRequest {
     name: string;
     email: string;
     password: string;
-    phone?: string;
-    dob?: string;
-    gender?: 'MALE' | 'FEMALE' | 'OTHER';
-    userType?: 'PROFESSIONAL' | 'STARTUP_OWNER';
+    accountType: 'startup' | 'professional';
+    // Optional details
+    companyName?: string;
+    industry?: string;
+    title?: string;
+    skills?: string;
+    availability?: string;
 }
 
 export interface AuthResponse {
@@ -20,10 +23,11 @@ export interface AuthResponse {
     refreshToken: string;
     user: {
         id: string;
-        email: string;
         name: string;
-        role: string;
-        emailVerified: boolean;
+        email: string;
+        accountType: 'startup' | 'professional';
+        avatar?: string;
+        role: 'user' | 'admin';
     };
 }
 
@@ -31,36 +35,18 @@ export const authService = {
     login: (data: LoginRequest) =>
         apiClient.post<AuthResponse>('/api/auth/login', data),
 
-    register: (data: RegisterRequest) =>
+    signup: (data: SignupRequest) =>
         apiClient.post<AuthResponse>('/api/auth/register', data),
 
     logout: () =>
         apiClient.post('/api/auth/logout'),
 
-    validate: () =>
-        apiClient.get('/api/auth/validate'),
+    getCurrentUser: () =>
+        apiClient.get('/api/auth/me'),
 
-    refresh: (refreshToken: string) =>
+    refreshToken: (refreshToken: string) =>
         apiClient.post<AuthResponse>('/api/auth/refresh', { refreshToken }),
 
-    getUserInfo: () =>
-        apiClient.get('/api/auth/user-info'),
-
-    updateProfile: (data: any) =>
-        apiClient.put('/api/auth/update-user', data),
-
-    changePassword: (data: { oldPassword: string; password: string }) =>
-        apiClient.put('/api/auth/change-password', data),
-
-    initiatePasswordReset: (email: string) =>
-        apiClient.post('/api/auth/initiate-password-reset', { to: email }),
-
-    resetPassword: (token: string, password: string) =>
-        apiClient.post('/api/auth/reset-password', { token, password }),
-
-    verifyEmail: (token: string) =>
-        apiClient.get(`/api/auth/verify-email?token=${token}`),
-
-    resendVerification: (email: string) =>
-        apiClient.post('/api/auth/resend-verification', { to: email }),
+    updateProfile: (data: Partial<any>) =>
+        apiClient.put('/api/auth/me/update', data),
 };

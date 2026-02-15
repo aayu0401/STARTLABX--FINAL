@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import contractService, { Contract, AIContractRequest } from '@/services/contract.service';
+import contractService, { Contract, AIContractRequest } from '@/services/contract-service';
 
 const contractTypes = [
     { value: 'equity_agreement', label: 'Equity Agreement', description: 'For equity-based compensation' },
@@ -105,8 +105,8 @@ export function ContractGenerator() {
                                         key={type.value}
                                         onClick={() => setFormData({ ...formData, type: type.value as any })}
                                         className={`p-3 border rounded-lg text-left transition-colors ${formData.type === type.value
-                                                ? 'border-primary bg-primary/10'
-                                                : 'border-gray-300 dark:border-gray-600 hover:border-primary'
+                                            ? 'border-primary bg-primary/10'
+                                            : 'border-gray-300 dark:border-gray-600 hover:border-primary'
                                             }`}
                                     >
                                         <div className="font-medium text-sm">{type.label}</div>

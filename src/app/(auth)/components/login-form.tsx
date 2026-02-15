@@ -19,7 +19,8 @@ import Link from 'next/link';
 import { useNavigation } from '@/hooks/use-navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { analyticsService } from '@/services/analytics';
+import { analyticsService } from '@/services/analytics.service';
+import { DemoLoginButton } from './demo-login-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -127,6 +128,14 @@ export function LoginForm() {
                   />
                 </FormControl>
                 <FormMessage />
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               </FormItem>
             )}
           />
@@ -139,17 +148,17 @@ export function LoginForm() {
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sign In
           </Button>
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-muted/50" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+          <DemoLoginButton />
         </form>
       </Form>
-      <p className="px-8 text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
-        <Link
-          href="/signup"
-          className="underline underline-offset-4 hover:text-primary"
-        >
-          Sign Up
-        </Link>
-      </p>
     </>
   );
 }

@@ -19,12 +19,15 @@ interface PostCardProps {
     onSave?: (postId: string) => void;
 }
 
-const POST_TYPE_CONFIG = {
+const POST_TYPE_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
     UPDATE: { icon: '📢', label: 'Update', color: 'bg-blue-500/10 text-blue-600 border-blue-500/20' },
     OPPORTUNITY: { icon: '💼', label: 'Opportunity', color: 'bg-green-500/10 text-green-600 border-green-500/20' },
     INSIGHT: { icon: '💡', label: 'Insight', color: 'bg-purple-500/10 text-purple-600 border-purple-500/20' },
     QUESTION: { icon: '❓', label: 'Question', color: 'bg-orange-500/10 text-orange-600 border-orange-500/20' },
     ACHIEVEMENT: { icon: '🎉', label: 'Achievement', color: 'bg-pink-500/10 text-pink-600 border-pink-500/20' },
+    LAUNCH: { icon: '🚀', label: 'Launch', color: 'bg-gradient-to-r from-red-500/10 to-orange-500/10 text-orange-600 border-orange-500/20' },
+    text: { icon: '📝', label: 'Post', color: 'bg-gray-500/10 text-gray-600 border-gray-500/20' },
+    image: { icon: '🖼️', label: 'Image', color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' },
 };
 
 export function PostCard({ post, onLike, onComment, onShare, onSave }: PostCardProps) {
@@ -34,7 +37,7 @@ export function PostCard({ post, onLike, onComment, onShare, onSave }: PostCardP
     const [isSaved, setIsSaved] = useState(post.isSaved || false);
     const [likesCount, setLikesCount] = useState(post.likesCount);
 
-    const typeConfig = POST_TYPE_CONFIG[post.type];
+    const typeConfig = POST_TYPE_CONFIG[post.type] || POST_TYPE_CONFIG.text;
 
     const handleLike = () => {
         setIsLiked(!isLiked);
@@ -132,7 +135,7 @@ export function PostCard({ post, onLike, onComment, onShare, onSave }: PostCardP
                                 key={index}
                                 className={cn(
                                     'relative aspect-video bg-muted rounded-lg overflow-hidden cursor-pointer group',
-                                    post.media.length === 3 && index === 0 && 'col-span-2'
+                                    post.media && post.media.length === 3 && index === 0 && 'col-span-2'
                                 )}
                             >
                                 {media.type === 'IMAGE' ? (
@@ -150,7 +153,7 @@ export function PostCard({ post, onLike, onComment, onShare, onSave }: PostCardP
                                         <FileText className="h-12 w-12 text-muted-foreground" />
                                     </div>
                                 )}
-                                {index === 3 && post.media.length > 4 && (
+                                {index === 3 && post.media && post.media.length > 4 && (
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                                         <span className="text-white text-2xl font-bold">+{post.media.length - 4}</span>
                                     </div>

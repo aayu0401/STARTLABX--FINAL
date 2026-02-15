@@ -1,69 +1,55 @@
-# STARTLABX Platform
+# STARTLABX - AI-Powered Startup Platform
 
-> AI-Powered Startup Platform - From Idea to MVP
+> **Complete Full-Stack Platform** - From Idea Validation to MVP Launch
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ## 🚀 Overview
 
-STARTLABX is a comprehensive, AI-powered platform designed to help startups and professionals succeed. From validating ideas to hiring team members, everything you need is in one place.
+STARTLABX is a comprehensive platform that helps startups succeed through AI-powered tools, talent marketplace, and social networking features.
 
 ### ✨ Key Features
 
-- **🤖 AI-Powered Tools**: Idea validation, pitch deck generation, MVP planning
-- **👥 Resource Marketplace**: Instant hiring (hourly/equity/salary)
-- **📝 Contract Generation**: AI-powered legal contracts with e-signature
-- **🌐 Social Network**: LinkedIn-style feed and networking
-- **💳 Subscription System**: 4 tiers from Free to Enterprise
-- **📊 Analytics Dashboard**: Track your startup's progress
+- 🤖 **AI-Powered Tools** - Idea validation, pitch deck generation, MVP planning, AI copilot
+- 👥 **Talent Marketplace** - Hire professionals on hourly/equity/salary basis
+- 📱 **Social Network** - LinkedIn-style feed, communities, real-time messaging
+- 📊 **Analytics Dashboard** - Track your startup's progress
+- 💳 **Subscription System** - 4-tier pricing (Free, Starter, Pro, Enterprise)
+- 🔐 **Secure Authentication** - JWT-based auth with token refresh
 
-## 🎯 Platform Completion: 95%
-
-This is a **production-ready** platform with 70+ files and comprehensive features.
-
-## 🛠️ Tech Stack
+## 🏗️ Architecture
 
 ### Frontend
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript 5
-- **Styling**: Tailwind CSS
-- **UI Components**: Radix UI (37 components)
-- **State Management**: React Context + Hooks
+- **Styling**: Tailwind CSS + Custom Design System
+- **UI**: Radix UI + Premium Components
+- **State**: React Context + Hooks
 
-### Backend
-- **Microservices**: 16 services (Spring Boot + Node.js)
-- **Databases**: PostgreSQL, MongoDB, Redis
-- **Message Queue**: Kafka
-- **Search**: Elasticsearch
-- **Storage**: MinIO
+### Backend (16 Microservices)
+- API Gateway, Auth, User, AI, Marketplace, Social, Analytics
+- Chat (WebSocket), Notifications, Contracts, Subscriptions
+- Payment, Storage, Search, Email, Incubator
 
-### AI & Integrations
-- **AI**: OpenAI GPT-4 Turbo
-- **Payments**: Stripe
-- **E-Signatures**: DocuSign/HelloSign
-- **KYC**: Onfido/Jumio/Persona
+### Databases
+- PostgreSQL (User data, startups)
+- MongoDB (Posts, messages)
+- Redis (Sessions, cache)
+- Elasticsearch (Search)
 
 ## 📦 Installation
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Git
-
-### Setup
-
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/yourusername/startlabx.git
 cd startlabx
 
 # Install dependencies
 npm install
 
-# Set up environment variables
+# Set up environment
 cp .env.example .env.local
 # Edit .env.local with your API keys
 
@@ -71,129 +57,141 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+Open [http://localhost:3000](http://localhost:3000)
 
 ## 🔑 Environment Variables
 
-Create a `.env.local` file with:
-
 ```env
+# API
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_WS_URL=http://localhost:8087
+
 # OpenAI
-OPENAI_API_KEY=your_openai_api_key
+OPENAI_API_KEY=your_openai_key
 
 # Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+NEXT_PUBLIC_STRIPE_KEY=your_stripe_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
-
-# API Gateway
-NEXT_PUBLIC_API_URL=http://localhost:8080
-
-# Other services
-NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-## 📚 Documentation
-
-- [Feature Audit](./FEATURE_AUDIT.md) - Complete feature breakdown
-- [Final Build Summary](./FINAL_BUILD_SUMMARY.md) - Platform overview
-- [Subscription System](./SUBSCRIPTION_SYSTEM.md) - Pricing & plans
-- [UI Enhancements](./UI_ENHANCEMENTS_SUMMARY.md) - Design system
-
-## 🎨 Features
-
-### For Startups
-- ✅ Validate ideas with AI
-- ✅ Generate professional pitch decks
-- ✅ Plan MVP roadmaps
-- ✅ Find and hire resources
-- ✅ Generate legal contracts
-- ✅ Build your network
-- ✅ Track progress
-
-### For Professionals
-- ✅ Find equity opportunities
-- ✅ Showcase your skills
-- ✅ Get hired (hourly/equity/salary)
-- ✅ Build your network
-- ✅ AI career guidance
-
-## 💰 Pricing
-
-| Plan | Price | Features |
-|------|-------|----------|
-| **Free** | $0/mo | 5 AI credits, basic features |
-| **Starter** | $29/mo | 50 credits, 5 pitch decks |
-| **Professional** | $79/mo | 200 credits, unlimited decks |
-| **Enterprise** | $299/mo | Unlimited everything |
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
-vercel
-```
-
-### Docker
-
-```bash
-# Build
-docker build -t startlabx .
-
-# Run
-docker run -p 3000:3000 startlabx
-```
-
-## 📊 Project Structure
+## 📁 Project Structure
 
 ```
 startlabx/
 ├── src/
-│   ├── app/              # Next.js app router pages
-│   ├── components/       # React components
-│   │   ├── ai-builder/   # AI tools components
-│   │   ├── ai-copilot/   # AI assistant components
-│   │   ├── marketplace/  # Hiring marketplace
-│   │   ├── contracts/    # Contract generation
-│   │   ├── subscription/ # Pricing & billing
-│   │   └── ui/           # UI components (37)
-│   ├── services/         # API services
-│   ├── contexts/         # React contexts
-│   └── lib/              # Utilities
-├── backend/              # Microservices
-│   └── ai-copilot-service/
-├── public/               # Static assets
-└── docs/                 # Documentation
+│   ├── app/                    # Next.js app router
+│   │   ├── (auth)/            # Auth pages
+│   │   ├── (app)/             # Protected pages
+│   │   ├── layout.tsx         # Root layout
+│   │   └── page.tsx           # Landing page
+│   ├── components/
+│   │   ├── ui/                # Radix UI components
+│   │   └── premium/           # Custom premium components
+│   ├── services/              # Backend API services
+│   ├── lib/                   # Utilities
+│   └── styles/                # Global styles
+├── backend/                   # Microservices
+└── package.json
 ```
+
+## 🎨 Features
+
+### AI-Powered Tools
+- **Idea Validator** - Validate startup ideas with AI analysis
+- **Pitch Deck Generator** - Create professional pitch decks
+- **MVP Planner** - Generate detailed MVP roadmaps
+- **AI Copilot** - Get personalized startup guidance
+
+### Talent Marketplace
+- Browse professionals by skills
+- Filter by hourly/equity/salary
+- View detailed profiles
+- Generate contracts with AI
+- E-signature integration
+
+### Social Features
+- LinkedIn-style feed
+- Post creation and interactions
+- Communities
+- Real-time messaging
+- Notifications
+
+### Business Tools
+- Startup listings
+- Dashboard analytics
+- Project collaboration
+- Incubator programs
+
+## 💳 Subscription Tiers
+
+| Feature | Free | Starter | Pro | Enterprise |
+|---------|------|---------|-----|------------|
+| AI Credits | 5 | 50 | 200 | Unlimited |
+| Pitch Decks | 1 | 5 | Unlimited | Unlimited |
+| Team Members | 1 | 3 | 10 | Unlimited |
+| Support | Community | Email | Priority | Dedicated |
+| Price | $0 | $29/mo | $79/mo | $299/mo |
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+```bash
+npm i -g vercel
+vercel
+```
+
+### Docker
+```bash
+docker build -t startlabx .
+docker run -p 3000:3000 startlabx
+```
+
+### Manual
+```bash
+npm run build
+npm start
+```
+
+## 🧪 Testing
+
+```bash
+# Run tests
+npm test
+
+# Type check
+npm run typecheck
+
+# Lint
+npm run lint
+```
+
+## 📖 Documentation
+
+- [API Documentation](./docs/API.md)
+- [Component Guide](./docs/COMPONENTS.md)
+- [Backend Services](./docs/BACKEND.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) first.
+Contributions welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 📝 License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE)
 
 ## 🙏 Acknowledgments
 
-- OpenAI for GPT-4 API
-- Vercel for Next.js
-- Radix UI for components
-- Tailwind CSS for styling
+- Next.js team
+- Radix UI
+- Tailwind CSS
+- OpenAI
 
 ## 📧 Contact
 
 - Website: [startlabx.com](https://startlabx.com)
 - Email: support@startlabx.com
 - Twitter: [@startlabx](https://twitter.com/startlabx)
-
-## 🌟 Star History
-
-If you find this project useful, please consider giving it a star ⭐
 
 ---
 

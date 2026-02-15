@@ -1,183 +1,196 @@
-import apiClient from '../lib/api-client';
+import { apiClient } from '@/lib/api-client';
 
-export interface PitchDeck {
-    id: string;
-    startupId: string;
-    title: string;
-    slides: PitchSlide[];
-    status: 'draft' | 'completed' | 'published';
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface PitchSlide {
-    id: string;
-    type: 'cover' | 'problem' | 'solution' | 'market' | 'product' | 'business_model' | 'traction' | 'team' | 'financials' | 'ask' | 'custom';
-    title: string;
-    content: string;
-    notes?: string;
-    order: number;
-}
-
-export interface MVPPlan {
-    id: string;
-    startupId: string;
-    name: string;
-    description: string;
-    features: MVPFeature[];
-    timeline: {
-        totalWeeks: number;
-        phases: MVPPhase[];
+export interface IdeaValidation {
+    analysis: {
+        overallScore: number;
+        marketPotential: number;
+        feasibility: number;
+        uniqueness: number;
+        competitionLevel: number;
     };
-    resources: {
-        developers: number;
-        designers: number;
-        budget?: number;
-    };
-    techStack: string[];
-    status: 'planning' | 'in_progress' | 'completed';
-    createdAt: Date;
+    insights: string[];
+    recommendations: string[];
+    risks: string[];
+    opportunities: string[];
+    nextSteps: string[];
 }
 
 export interface MVPFeature {
     id: string;
     name: string;
     description: string;
-    priority: 'must_have' | 'should_have' | 'nice_to_have';
-    estimatedHours: number;
-    status: 'pending' | 'in_progress' | 'completed';
+    priority: 'must-have' | 'should-have' | 'nice-to-have';
+    effort: 'low' | 'medium' | 'high';
+    impact: 'low' | 'medium' | 'high';
+    status?: 'todo' | 'in-progress' | 'done';
+    estimatedHours?: number;
 }
 
-export interface MVPPhase {
-    name: string;
-    duration: number;
-    features: string[];
-    deliverables: string[];
-}
-
-export interface IdeaValidation {
+export interface MVPPlan {
     id: string;
-    idea: string;
-    analysis: {
-        marketPotential: number;
-        competitionLevel: number;
-        feasibility: number;
-        uniqueness: number;
-        overallScore: number;
+    name: string;
+    description: string;
+    features: MVPFeature[];
+    timeline: {
+        totalWeeks: number;
+        phases: Array<{
+            name: string;
+            duration: string;
+            deliverables: string[];
+        }>;
     };
-    insights: string[];
-    recommendations: string[];
-    competitors: string[];
-    targetMarket: string[];
-    risks: string[];
-    opportunities: string[];
-    nextSteps: string[];
+    techStack: string[];
+    resources: {
+        budget?: number;
+        team?: string[];
+    };
+}
+
+export interface PitchSlide {
+    id: string;
+    type: 'cover' | 'problem' | 'solution' | 'market' | 'product' | 'business-model' | 'traction' | 'team' | 'financials' | 'ask';
+    title: string;
+    content: string;
+    notes?: string;
+    order: number;
+}
+
+export interface PitchDeck {
+    id: string;
+    title: string;
+    slides: PitchSlide[];
     createdAt: Date;
+    updatedAt: Date;
 }
 
 class AIBuilderService {
-    private baseUrl = '/api/ai-builder';
-
-    /**
-     * Validate startup idea with AI
-     */
+    // Idea Validation
     async validateIdea(idea: string, industry?: string): Promise<IdeaValidation> {
-        const response = await apiClient.post(`${this.baseUrl}/validate-idea`, {
-            idea,
-            industry
-        });
-        return response.data;
+        try {
+            const response = await apiClient.post('/api/ai/validate-idea', {
+                idea,
+                industry,
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error validating idea:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Brainstorm with AI
-     */
-    async brainstorm(topic: string, context?: any): Promise<{
-        ideas: string[];
-        insights: string[];
-        questions: string[];
-    }> {
-        const response = await apiClient.post(`${this.baseUrl}/brainstorm`, {
-            topic,
-            context
-        });
-        return response.data;
+    // MVP Planning
+    async generateMVPPlan(params: {
+        productIdea: string;
+        targetUsers: string;
+        keyFeatures: string[];
+        timeline: number;
+        budget?: number;
+    }): Promise<MVPPlan> {
+        try {
+            const response = await apiClient.post('/api/ai/mvp-plan', params);
+            return response.data;
+        } catch (error) {
+            console.error('Error generating MVP plan:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Generate pitch deck with AI
-     */
-    async generatePitchDeck(startupInfo: {
+    async updateMVPFeature(planId: string, featureId: string, status: string): Promise<MVPPlan> {
+        try {
+            const response = await apiClient.patch(`/api/ai/mvp-plans/${planId}/features/${featureId}`, { status });
+            return response.data;
+        } catch (error) {
+            console.error('Error updating MVP feature:', error);
+            throw error;
+        }
+    }
+
+    async saveMVPPlan(plan: MVPPlan): Promise<string> {
+        try {
+            const response = await apiClient.post('/api/ai/mvp-plans', plan);
+            return response.data.id;
+        } catch (error) {
+            console.error('Error saving MVP plan:', error);
+            throw error;
+        }
+    }
+
+    async getMVPPlans(): Promise<MVPPlan[]> {
+        try {
+            const response = await apiClient.get('/api/ai/mvp-plans');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting MVP plans:', error);
+            throw error;
+        }
+    }
+
+    // Pitch Deck Generation
+    async generatePitchDeck(companyInfo: {
         name: string;
+        description?: string;
         problem: string;
         solution: string;
         market?: string;
         businessModel?: string;
     }): Promise<PitchDeck> {
-        const response = await apiClient.post(`${this.baseUrl}/generate-pitch`, startupInfo);
-        return response.data;
+        try {
+            const response = await apiClient.post('/api/ai/pitch-deck', companyInfo);
+            return response.data;
+        } catch (error) {
+            console.error('Error generating pitch deck:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get pitch deck
-     */
-    async getPitchDeck(pitchId: string): Promise<PitchDeck> {
-        const response = await apiClient.get(`${this.baseUrl}/pitch/${pitchId}`);
-        return response.data;
+    async savePitchDeck(deck: PitchDeck): Promise<string> {
+        try {
+            const response = await apiClient.post('/api/ai/pitch-decks', deck);
+            return response.data.id;
+        } catch (error) {
+            console.error('Error saving pitch deck:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Update pitch deck slide
-     */
-    async updatePitchSlide(pitchId: string, slideId: string, content: Partial<PitchSlide>): Promise<PitchDeck> {
-        const response = await apiClient.put(`${this.baseUrl}/pitch/${pitchId}/slides/${slideId}`, content);
-        return response.data;
+    async getPitchDecks(): Promise<PitchDeck[]> {
+        try {
+            const response = await apiClient.get('/api/ai/pitch-decks');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting pitch decks:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Generate MVP plan with AI
-     */
-    async generateMVPPlan(requirements: {
-        productIdea: string;
-        targetUsers: string;
-        keyFeatures: string[];
-        timeline?: number;
-        budget?: number;
-    }): Promise<MVPPlan> {
-        const response = await apiClient.post(`${this.baseUrl}/generate-mvp`, requirements);
-        return response.data;
+    async updatePitchDeck(deckId: string, updates: Partial<PitchDeck>): Promise<void> {
+        try {
+            await apiClient.put(`/api/ai/pitch-decks/${deckId}`, updates);
+        } catch (error) {
+            console.error('Error updating pitch deck:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Get MVP plan
-     */
-    async getMVPPlan(mvpId: string): Promise<MVPPlan> {
-        const response = await apiClient.get(`${this.baseUrl}/mvp/${mvpId}`);
-        return response.data;
+    async deletePitchDeck(deckId: string): Promise<void> {
+        try {
+            await apiClient.delete(`/api/ai/pitch-decks/${deckId}`);
+        } catch (error) {
+            console.error('Error deleting pitch deck:', error);
+            throw error;
+        }
     }
 
-    /**
-     * Update MVP feature status
-     */
-    async updateMVPFeature(mvpId: string, featureId: string, status: string): Promise<MVPPlan> {
-        const response = await apiClient.put(`${this.baseUrl}/mvp/${mvpId}/features/${featureId}`, {
-            status
-        });
-        return response.data;
-    }
-
-    /**
-     * Get AI recommendations for next steps
-     */
-    async getNextSteps(startupId: string): Promise<{
-        recommendations: string[];
-        priorities: string[];
-        resources: string[];
-    }> {
-        const response = await apiClient.get(`${this.baseUrl}/next-steps/${startupId}`);
-        return response.data;
+    async updatePitchSlide(deckId: string, slideId: string, updates: Partial<PitchSlide>): Promise<PitchDeck> {
+        try {
+            const response = await apiClient.patch(`/api/ai/pitch-decks/${deckId}/slides/${slideId}`, updates);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating pitch slide:', error);
+            throw error;
+        }
     }
 }
 
-export const aiBuilderService = new AIBuilderService();
+const aiBuilderService = new AIBuilderService();
 export default aiBuilderService;
